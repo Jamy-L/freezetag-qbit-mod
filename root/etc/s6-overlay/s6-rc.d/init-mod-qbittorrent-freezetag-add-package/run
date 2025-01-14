@@ -2,8 +2,6 @@
 
 Alpine
 echo "\
-    # fuse \
-    # py3-pip \
     git" >> /mod-repo-packages-to-install.list
 
 echo "\
