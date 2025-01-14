@@ -7,4 +7,4 @@ echo "\
     fuse" >> /mod-repo-packages-to-install.list
 
 echo "\
-    git+https://github.com/undaunt/freezetag" >> /mod-repo-packages-to-install.list
+    git+https://github.com/undaunt/freezetag" >> /mod-pip-packages-to-install.list
