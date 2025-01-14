@@ -3,8 +3,12 @@
 # This is an example service that would run for the mod
 # It depends on init-services, the baseimage hook for start of all longrun services
 
+echo "Starting mod-qbittorrent-freezetag service (mount)"
+
 exec \
     freezetag mount
         --uid "${PUID}"
         --gid "${PGID}"
         "/data/torrents" "/data/torrents_frozen"
+
+echo "Dismounting mod-qbittorrent-freezetag service"
