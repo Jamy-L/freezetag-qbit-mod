@@ -6,5 +6,5 @@ echo "\
     py3-pip \
     fuse" >> /mod-repo-packages-to-install.list
 
-# echo "\
-#     git+https://github.com/undaunt/freezetag" >> /mod-pip-packages-to-install.list
+echo "\
+    git+https://github.com/undaunt/freezetag" >> /mod-pip-packages-to-install.list

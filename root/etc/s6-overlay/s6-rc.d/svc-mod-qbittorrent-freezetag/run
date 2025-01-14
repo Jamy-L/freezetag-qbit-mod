@@ -7,4 +7,4 @@ exec \
     freezetag mount
         --uid "${PUID}"
         --gid "${PGID}"
-        "${DOWNLOAD_DIR}" "${FROZEN_MOUNT}"
+        "/data/torrents" "/data/torrents-frozen"
