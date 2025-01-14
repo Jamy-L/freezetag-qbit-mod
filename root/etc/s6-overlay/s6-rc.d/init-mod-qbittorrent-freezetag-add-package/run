@@ -2,6 +2,7 @@
 
 Alpine
 echo "\
+    fuse \
     git" >> /mod-repo-packages-to-install.list
 
 echo "\
