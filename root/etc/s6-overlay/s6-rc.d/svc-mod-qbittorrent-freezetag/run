@@ -2,11 +2,9 @@
 
 # Check if DOCKER_MODS_DEBUG is set and true
 if [[ "${DOCKER_MODS_DEBUG}" == "true" ]]; then
-    LOGFILE="/tmp/freezetag.log"
 
     log() {
         echo "$(date '+%m/%d/%y %H:%M:%S') [Freezetag] - $1"
-        # echo "$(date '+%m/%d/%y %H:%M:%S') [Freezetag] - $1" >> $LOGFILE
     }
 
     # Initial logging
@@ -18,8 +16,6 @@ else
     }
 fi
 
-# Log the execution timestamp
-log "Service script started."
 
 
 # Check if the CATEGORY_DIR and FROZEN_DIR environment variables are set and that the directories exist
@@ -45,3 +41,6 @@ exec \
         --gid "${PGID}" \
         "${CATEGORY_DIR}" \
         "${FROZEN_DIR}"
+
+# Log the execution timestamp
+log "Service script started."
