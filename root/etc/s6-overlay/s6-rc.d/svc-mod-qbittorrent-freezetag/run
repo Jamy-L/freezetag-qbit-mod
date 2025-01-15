@@ -1,18 +1,32 @@
 #!/usr/bin/with-contenv bash
-LOGFILE="/tmp/freezetag.log"
 
-echo "Starting svc-qbittorrent-freezetag..." >> $LOGFILE
-date >> $LOGFILE
+# Check if DOCKER_MODS_DEBUG is set and true
+if [[ "${DOCKER_MODS_DEBUG}" == "true" ]]; then
+    LOGFILE="/tmp/freezetag.log"
 
-# This is an example service that would run for the mod
-# It depends on init-services, the baseimage hook for start of all longrun services
+    log() {
+        echo "$(date '+%m/%d/%y %H:%M:%S') [Freezetag] - $1" >> $LOGFILE
+    }
 
+    # Initial logging
+    log "Starting svc-qbittorrent-freezetag..."
+else
+    log() {
+        # No-op function to avoid logging when DOCKER_MODS_DEBUG is not true
+        :
+    }
+fi
 
+# Log the execution timestamp
+log "Service script started."
+
+# Execute the main command
 exec \
     freezetag mount \
     --uid "${PUID}" \
     --gid "${PGID}" \
-    "/data/torrents" \
-    "/data/torrents_frozen"
+    "{CATEGORY_DIR}" \
+    "{FROZEN_DIR}"
 
-echo "Dismounting mod-qbittorrent-freezetag service" >> $LOGFILE 2>&1
+# If the script gets to this point (which it shouldn't with `exec`), log it
+log "Dismounting mod-qbittorrent-freezetag service."
