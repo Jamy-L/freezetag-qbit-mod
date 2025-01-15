@@ -27,11 +27,15 @@ if [[ -z "${CATEGORY_DIR}" || -z "${FROZEN_DIR}" ]]; then
     exit 1
 fi
 
-if [[ ! -d "${CATEGORY_DIR}" || ! -d "${FROZEN_DIR}" ]]; then
-    log "Error: The CATEGORY_DIR and FROZEN_DIR directories must exist."
+if [[ ! -d "${CATEGORY_DIR}"]]; then
+    log "Error: The CATEGORY_DIR was set to ${CATEGORY_DIR}, but the directory does not exist."
     exit 1
 fi
 
+if [[ ! -d "${FROZEN_DIR}"]]; then
+    log "Error: The FROZEN_DIR was set to ${FROZEN_DIR}, but the directory does not exist."
+    exit 1
+fi
 
 # Execute the main command
 exec \
