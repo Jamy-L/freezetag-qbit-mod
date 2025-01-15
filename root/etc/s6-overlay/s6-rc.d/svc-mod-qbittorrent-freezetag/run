@@ -43,7 +43,7 @@ exec \
     --uid "${PUID}" \
     --gid "${PGID}" \
     "${CATEGORY_DIR}" \
-    "${FROZEN_DIR}" $
+    "${FROZEN_DIR}" &
 
 while ! mount | grep -q "${FROZEN_DIR}"; do
     echo "Waiting for mount to be available..."
