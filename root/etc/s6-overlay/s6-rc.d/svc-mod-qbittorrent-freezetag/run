@@ -1,19 +1,13 @@
 #!/usr/bin/with-contenv bash
 
+
+log() {
+    echo "[mod-freezetag] $1"
+}
+
 # Check if DOCKER_MODS_DEBUG is set and true
 if [[ "${DOCKER_MODS_DEBUG}" == "true" ]]; then
-
-    log() {
-        echo "[mod-freezetag] $1"
-    }
-
-    # Initial logging
-    log "Starting svc-qbittorrent-freezetag..."
-else
-    log() {
-        # No-op function to avoid logging when DOCKER_MODS_DEBUG is not true
-        :
-    }
+    echo "[mod-freezetag] (DEBUG) Starting svc-qbittorrent-freezetag..."
 fi
 
 
@@ -54,7 +48,7 @@ echo "\
 |                     Freezetag mod loaded                |
 +---------------------------------------------------------+
 |  Freeze  category    : ${CAT_display::33}|
-|  Category directory  : ${CAT_display::33}|
+|  Category directory  : ${CAT_DIR_display::33}|
 |  Frozen directory    : ${FRO_DIR::33}|
 +---------------------------------------------------------+
 "
