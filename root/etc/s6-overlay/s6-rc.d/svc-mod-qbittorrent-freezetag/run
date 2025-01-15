@@ -4,7 +4,7 @@
 if [[ "${DOCKER_MODS_DEBUG}" == "true" ]]; then
 
     log() {
-        echo "[mod-freezetag] - $1"
+        echo "[mod-freezetag] $1"
     }
 
     # Initial logging
@@ -45,6 +45,16 @@ if [ ! -z "$(find ${FROZEN_DIR} -mindepth 1 -print -quit)" ]; then
     exit 1
 fi
 
+echo "\
++---------------------------------------------------------+
+|                     Freezetag mod loaded                |
++---------------------------------------------------------+
+|  Freeze  category    : ${FREEZE_CATEGORY::33}|
+|  Category directory  : ${CATEGORY_DIR::33}|
+|  Frozen directory    : ${FROZEN_DIR::33}|
++---------------------------------------------------------+
+"
+
 exec \
     s6-notifyoncheck -d -n 300 -w 1000 -c "mountpoint -q ${FROZEN_DIR}" \
         freezetag mount \
@@ -52,6 +62,3 @@ exec \
         --gid "${PGID}" \
         "${CATEGORY_DIR}" \
         "${FROZEN_DIR}"
-
-# Log the execution timestamp
-log "Service script started."
