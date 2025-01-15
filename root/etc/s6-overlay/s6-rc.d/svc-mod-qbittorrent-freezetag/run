@@ -5,7 +5,8 @@ if [[ "${DOCKER_MODS_DEBUG}" == "true" ]]; then
     LOGFILE="/tmp/freezetag.log"
 
     log() {
-        echo "$(date '+%m/%d/%y %H:%M:%S') [Freezetag] - $1" >> $LOGFILE
+        echo "$(date '+%m/%d/%y %H:%M:%S') [Freezetag] - $1"
+        # echo "$(date '+%m/%d/%y %H:%M:%S') [Freezetag] - $1" >> $LOGFILE
     }
 
     # Initial logging
