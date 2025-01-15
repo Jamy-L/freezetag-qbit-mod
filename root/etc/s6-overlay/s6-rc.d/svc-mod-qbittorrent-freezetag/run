@@ -37,18 +37,10 @@ if [[ ! -d "${FROZEN_DIR}" ]]; then
     exit 1
 fi
 
-# Execute the main command
 exec \
-    freezetag mount \
-    --uid "${PUID}" \
-    --gid "${PGID}" \
-    "${CATEGORY_DIR}" \
-    "${FROZEN_DIR}" &
-
-while ! mount | grep -q "${FROZEN_DIR}"; do
-    echo "Waiting for mount to be available..."
-    sleep 1
-done
-
-exec s6-notifywhenup -- echo "Mount is ready, service is now up."
-log "Mount successful."
+    s6-notifyoncheck -d -n 300 -w 1000 -c "mount | grep -q '${FROZEN_DIR}'" \
+        freezetag mount \
+        --uid "${PUID}" \
+        --gid "${PGID}" \
+        "${CATEGORY_DIR}" \
+        "${FROZEN_DIR}"
