@@ -40,7 +40,7 @@ if [[ ! -d "${FROZEN_DIR}" ]]; then
 fi
 
 # Check if the FROZEN_DIR is empty
-if [ -z "$(find ${FROZEN_DIR} -mindepth 1 -print -quit)" ]; then
+if [ ! -z "$(find ${FROZEN_DIR} -mindepth 1 -print -quit)" ]; then
     log "Error: The FROZEN_DIR (${FROZEN_DIR}) is not empty."
     exit 1
 fi
