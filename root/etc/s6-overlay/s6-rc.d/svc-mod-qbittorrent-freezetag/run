@@ -50,4 +50,5 @@ while ! mount | grep -q "${FROZEN_DIR}"; do
     sleep 1
 done
 
+exec s6-notifywhenup -- echo "Mount is ready, service is now up."
 log "Mount successful."
