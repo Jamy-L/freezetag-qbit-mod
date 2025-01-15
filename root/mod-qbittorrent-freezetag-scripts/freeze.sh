@@ -37,15 +37,27 @@ fi
 
 # Function to set permissions according to the umask for files that don't have .ftag extension
 set_permissions() {
-    if [ -d "$1" ]; then # If it's a directory, recursively process it
+    if [ -d "$1" ]; then # If it's a directory, process all files inside it
         for item in "$1"/*; do
             [ -e "$item" ] || continue # Skip in case of empty directories
-            set_permissions "$item"
+            set_permissions "$item"  # Recursively process subdirectories
         done
-    elif [ -f "$1" ] && [[ "$1" != *.ftag ]]; then # Set permission for all files but not .ftag 
-        chmod $(stat --format '%a' "$1") "$1"
+
+        # Default permissions for directories is 777
+        default_permissions=777
+        final_permissions=$((default_permissions & ~CATEGORY_UMASK))
+        chmod $final_permissions "$1"
+        log "Applied umask to directory: $1 with permissions $final_permissions"
+
+    elif [ -f "$1" ] && [[ "$1" != *.ftag ]]; then # Process files (but not .ftag)
+        # Default permissions for files is 666
+        default_permissions=666
+        final_permissions=$((default_permissions & ~CATEGORY_UMASK))
+        chmod $final_permissions "$1"
+        log "Applied umask to file: $1 with permissions $final_permissions"
     fi
 }
+
 
 # Check if the category matches FREEZE_CATEGORY
 if [[ "$category" == "$FREEZE_CATEGORY" ]]; then
@@ -56,18 +68,11 @@ if [[ "$category" == "$FREEZE_CATEGORY" ]]; then
 
     # Set the umask for the category if specified
     if [[ -n "$CATEGORY_UMASK" ]]; then
-        CURRENT_UMASK=$(umask)
-
         debug_log "Setting umask $CATEGORY_UMASK for path: $torrent_path."
 
-        umask "$CATEGORY_UMASK" 
-        
         # Recursively find files and apply the set_permissions function
         export -f set_permissions
         find "$torrent_path" -type f -exec bash -c 'set_permissions "$0"' {} \;
-        
-        umask "$CURRENT_UMASK" # Restore the original umask
-        debug_log "Restored the original umask: $CURRENT_UMASK."
     fi
 
 
