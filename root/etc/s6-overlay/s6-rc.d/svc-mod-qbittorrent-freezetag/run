@@ -43,7 +43,11 @@ exec \
     --uid "${PUID}" \
     --gid "${PGID}" \
     "${CATEGORY_DIR}" \
-    "${FROZEN_DIR}"
+    "${FROZEN_DIR}" $
 
-# If the script gets to this point (which it shouldn't with `exec`), log it
-log "Dismounting mod-qbittorrent-freezetag service."
+while ! mount | grep -q "${FROZEN_DIR}"; do
+    echo "Waiting for mount to be available..."
+    sleep 1
+done
+
+log "Mount successful."
