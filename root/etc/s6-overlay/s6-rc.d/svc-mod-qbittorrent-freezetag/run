@@ -45,13 +45,17 @@ if [ ! -z "$(find ${FROZEN_DIR} -mindepth 1 -print -quit)" ]; then
     exit 1
 fi
 
+spaces='                                                            '
+CAT_display="${FREEZE_CATEGORY}${spaces}"
+CAT_DIR_display="${CATEGORY_DIR}${spaces}"
+FRO_DIR="${FROZEN_DIR}${spaces}"
 echo "\
 +---------------------------------------------------------+
 |                     Freezetag mod loaded                |
 +---------------------------------------------------------+
-|  Freeze  category    : ${FREEZE_CATEGORY::33}|
-|  Category directory  : ${CATEGORY_DIR::33}|
-|  Frozen directory    : ${FROZEN_DIR::33}|
+|  Freeze  category    : ${CAT_display::33}|
+|  Category directory  : ${CAT_display::33}|
+|  Frozen directory    : ${FRO_DIR::33}|
 +---------------------------------------------------------+
 "
 
