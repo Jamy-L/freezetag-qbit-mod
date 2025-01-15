@@ -20,6 +20,19 @@ fi
 # Log the execution timestamp
 log "Service script started."
 
+
+# Check if the CATEGORY_DIR and FROZEN_DIR environment variables are set and that the directories exist
+if [[ -z "${CATEGORY_DIR}" || -z "${FROZEN_DIR}" ]]; then
+    log "Error: The CATEGORY_DIR and FROZEN_DIR environment variables must be set."
+    exit 1
+fi
+
+if [[ ! -d "${CATEGORY_DIR}" || ! -d "${FROZEN_DIR}" ]]; then
+    log "Error: The CATEGORY_DIR and FROZEN_DIR directories must exist."
+    exit 1
+fi
+
+
 # Execute the main command
 exec \
     freezetag mount \
