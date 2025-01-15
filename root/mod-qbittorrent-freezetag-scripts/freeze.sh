@@ -7,14 +7,13 @@ CATEGORY_UMASK="${CATEGORY_UMASK:-}"
 
 # Function for logging with timestamps
 log() {
-    local message="$1"
-    echo "[Freezetag] $(date '+%m/%d/%y %H:%M:%S') - $message"
+    echo "[Freezetag] $(date '+%m/%d/%y %H:%M:%S') $1"
 }
 
 # Function for debug logging
 debug_log() {
     if [[ "$DOCKER_MODS_DEBUG" == "true" ]]; then
-        echo "[Freezetag] (DEBUG) $(date '+%m/%d/%y %H:%M:%S') - $message"
+        echo "[Freezetag] (DEBUG) $(date '+%m/%d/%y %H:%M:%S') $1"
     fi
 }
 
