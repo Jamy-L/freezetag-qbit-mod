@@ -4,7 +4,7 @@
 if [[ "${DOCKER_MODS_DEBUG}" == "true" ]]; then
 
     log() {
-        echo "$(date '+%m/%d/%y %H:%M:%S') [Freezetag] - $1"
+        echo "[mod-freezetag] - $1"
     }
 
     # Initial logging
@@ -19,19 +19,30 @@ fi
 
 
 # Check if the CATEGORY_DIR and FROZEN_DIR environment variables are set and that the directories exist
-if [[ -z "${CATEGORY_DIR}" || -z "${FROZEN_DIR}" ]]; then
-    log "Error: The CATEGORY_DIR and FROZEN_DIR environment variables must be set."
+if [[ -z "${CATEGORY_DIR}" ]]; then
+    log "Error: The CATEGORY_DIR environment variables must be set."
+    exit 1
+fi
+
+if [[ -z "${FROZEN_DIR}" ]]; then
+    log "Error: The FROZEN_DIR environment variables must be set."
     exit 1
 fi
 
 if [[ ! -d "${CATEGORY_DIR}" ]]; then
-    log "Error: The CATEGORY_DIR was set to ${CATEGORY_DIR}, but the directory does not exist."
+    log "Error: The CATEGORY_DIR (${CATEGORY_DIR}) does not exist."
     exit 1
 fi
 
 if [[ ! -d "${FROZEN_DIR}" ]]; then
-    log "Error: The FROZEN_DIR was set to ${FROZEN_DIR}, but the directory does not exist."
+    log "Error: The FROZEN_DIR (${FROZEN_DIR}) does not exist."
     exit 1
+fi
+
+# Check if the FROZEN_DIR is empty
+if [ -z "$(ls -A ${FROZEN_DIR})" ]; then
+    log "Error: The FROZEN_DIR (${FROZEN_DIR}) is not empty."
+        exit 1
 fi
 
 exec \

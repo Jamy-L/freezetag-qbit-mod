@@ -7,13 +7,13 @@ DOCKER_MODS_DEBUG="${DOCKER_MODS_DEBUG:-false}"
 # Function for logging with timestamps
 log() {
     local message="$1"
-    echo "$(date '+%m/%d/%y %H:%M:%S') [Freezetag] - $message"
+    echo "[Freezetag] $(date '+%m/%d/%y %H:%M:%S') - $message"
 }
 
 # Function for debug logging
 debug_log() {
     if [[ "$DOCKER_MODS_DEBUG" == "true" ]]; then
-        log "$1"
+        echo "[Freezetag] (DEBUG) $(date '+%m/%d/%y %H:%M:%S') - $message"
     fi
 }
 
@@ -37,9 +37,9 @@ fi
 
 # Check if the category matches FREEZE_CATEGORY
 if [[ "$category" == "$FREEZE_CATEGORY" ]]; then
-    debug_log "Category '$category' matches FREEZE_CATEGORY. Freezing torrent data..."
+    debug_log "Category '$category' matches FREEZE_CATEGORY $FREEZE_CATEGORY. Freezing torrent data..."
     freezetag freeze "$torrent_path"
     debug_log "Freeze operation completed for path: $torrent_path."
 else
-    debug_log "Category '$category' does NOT match FREEZE_CATEGORY. Skipping."
+    debug_log "Category '$category' does NOT match FREEZE_CATEGORY $FREEZE_CATEGORY. Skipping."
 fi
