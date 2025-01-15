@@ -42,14 +42,16 @@ fi
 spaces='                                                            '
 CAT_display="${FREEZE_CATEGORY}${spaces}"
 CAT_DIR_display="${CATEGORY_DIR}${spaces}"
-FRO_DIR="${FROZEN_DIR}${spaces}"
+FRO_DIR_display="${FROZEN_DIR}${spaces}"
+CAT_UMASK_display="${CATEGORY_UMASK}${spaces}"
 echo "\
 +---------------------------------------------------------+
 |                     Freezetag mod loaded                |
 +---------------------------------------------------------+
 |  Freeze  category    : ${CAT_display::33}|
 |  Category directory  : ${CAT_DIR_display::33}|
-|  Frozen directory    : ${FRO_DIR::33}|
+|  Frozen directory    : ${FRO_DIR_display::33}|
+|  Category UMASK      : ${CAT_UMASK_display::33}|
 +---------------------------------------------------------+
 "
 
