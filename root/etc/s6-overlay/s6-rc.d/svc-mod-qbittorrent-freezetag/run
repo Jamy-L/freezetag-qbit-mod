@@ -38,7 +38,7 @@ if [[ ! -d "${FROZEN_DIR}" ]]; then
 fi
 
 exec \
-    s6-notifyoncheck -d -n 300 -w 1000 -c "mount | grep -q '${FROZEN_DIR}'" \
+    s6-notifyoncheck -d -n 300 -w 1000 -c "mountpoint -q '${FROZEN_DIR}'" \
         freezetag mount \
         --uid "${PUID}" \
         --gid "${PGID}" \
