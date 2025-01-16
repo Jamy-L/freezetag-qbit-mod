@@ -69,6 +69,12 @@ init_checks(){
       log "Warning: The \"Bypass authentication for clients on localhost\" setting is not set."
     elif [ -n "${QBT_USERNAME}" ] && [ -n "${QBT_PASSWORD}" ]; then
         echo "Debug: Calling qbt_login function"
+        echo curl --fail \
+            ${CURL_OPT} \
+            ${QBT_COOKIES} \
+            --url "${QBITTORRENT}/api/v2/auth/login" \
+            --data "username=${QBT_USERNAME}" \
+            --data "password=${QBT_PASSWORD}"
         if [ "$(qbt_login)" != "Ok." ]; then
             err='true'
             log "Error: Qbittorrent authentication failed, check the credentials."
