@@ -97,35 +97,54 @@ init_checks(){
 fetch_sync_data() {
     local rid="${1:-0}"  # Default to 0 if no RID provided
     local response
+    local new_rid
+    local torrents_removed
 
+    log_debug "Fetching /sync/maindata with RID: $rid"
+
+    # Fetch data
     response=$(curl --silent --fail \
         ${QBT_COOKIES} \
         --url "${QBITTORRENT}/api/v2/sync/maindata?rid=${rid}" 2>/dev/null)
 
+    # Check if curl failed
     if [[ $? -ne 0 || -z "$response" ]]; then
         log "ERROR: Failed to fetch data from /sync/maindata."
+        log_debug "Curl response was empty or failed. Response: $response"
         return 1
     fi
 
-    # Parse response
-    local new_rid=$(echo "$response" | jq -r '.rid')
-    local torrents_removed=$(echo "$response" | jq -c '.torrents_removed[]?')
+    # Log the raw response for debugging
+    log_debug "Raw response from /sync/maindata: $response"
 
-    # Save new RID
+    # Parse new RID
+    new_rid=$(echo "$response" | jq -r '.rid')
+    if [[ -z "$new_rid" ]]; then
+        log "ERROR: Failed to parse RID from response."
+        return 1
+    fi
     echo "$new_rid" > "$RID_FILE"
-    echo "New RID: $new_rid"
-    echo "Removed torrents: $torrents_removed"
+    log_debug "Parsed new RID: $new_rid"
+
+    # Parse removed torrents
+    torrents_removed=$(echo "$response" | jq -c '.torrents_removed[]?')
+    log_debug "Parsed removed torrents: $torrents_removed"
 
     # Handle removed torrents
     if [[ -n "$torrents_removed" ]]; then
-        log_debug "Detected removed torrents: $torrents_removed"
         for torrent_hash in $torrents_removed; do
             torrent_hash=$(echo "$torrent_hash" | tr -d '"')
+            log_debug "Processing removed torrent: $torrent_hash"
+            # Uncomment the following line to call your handler function
             # handle_removed_torrent "$torrent_hash"
         done
+    else
+        log_debug "No removed torrents detected."
     fi
+
     log_debug "Done processing sync data. Next try in $MAX_SLEEP_TIME seconds."
 }
+
 
 # handle_removed_torrent() {
 #     local torrent_hash=$1
