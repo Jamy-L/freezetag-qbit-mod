@@ -155,7 +155,7 @@ main() {
     log_debug "Starting torrent removal tracker with RID=$rid"
 
     while :; do
-        # fetch_sync_data "$rid"
+        fetch_sync_data "$rid"
         sleep "${MAX_SLEEP_TIME}"
     done
 }
