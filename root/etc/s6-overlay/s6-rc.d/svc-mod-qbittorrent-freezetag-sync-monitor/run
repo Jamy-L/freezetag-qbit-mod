@@ -99,13 +99,14 @@ fetch_sync_data() {
     local response
     local new_rid
     local torrents_removed
+    local nocache=$(date +%s%N)  # Generate a timestamp-based nocache value
 
     log_debug "Fetching /sync/maindata with RID: $rid"
 
     # Fetch data
     response=$(curl --silent --fail \
         ${QBT_COOKIES} \
-        --url "${QBITTORRENT}/api/v2/sync/maindata?rid=${rid}" 2>/dev/null)
+        --url "${QBITTORRENT}/api/v2/sync/maindata?rid=${rid}&nocache=${nocache}" 2>/dev/null)
 
     # Check if curl failed
     if [[ $? -ne 0 || -z "$response" ]]; then
