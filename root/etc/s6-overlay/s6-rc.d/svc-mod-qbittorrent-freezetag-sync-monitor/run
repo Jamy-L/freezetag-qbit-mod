@@ -30,7 +30,6 @@ log_debug() {
 
 
 qbt_login() {
-    echo "Attempting to login to qBittorrent with credentials : ${QBT_USERNAME} / ${QBT_PASSWORD}"
     echo "url : ${QBITTORRENT}/api/v2/auth/login"
     curl --fail --silent \
         ${CURL_OPT} \
@@ -64,6 +63,7 @@ init_checks(){
   if [ ! -f "${CONF_FILE}" ]; then
     log "${CONF_FILE} not found, can't check the The \"Bypass authentication for clients on localhost\" setting. Running in standalone mode."
   else
+    echo "Attempting to login to qBittorrent with credentials : ${QBT_USERNAME} / ${QBT_PASSWORD}"
     if { [ -z "${QBT_USERNAME}" ] || [ -z "${QBT_PASSWORD}" ] ;} && [ "$(grep 'LocalHostAuth' ${CONF_FILE} | awk -F'=' '{print $2}')" != "false" ]; then
       err='true'
       log "Warning: The \"Bypass authentication for clients on localhost\" setting is not set."
