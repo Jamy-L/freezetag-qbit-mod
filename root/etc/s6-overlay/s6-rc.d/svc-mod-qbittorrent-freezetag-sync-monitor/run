@@ -30,7 +30,6 @@ log_debug() {
 
 
 qbt_login() {
-    echo "url : ${QBITTORRENT}/api/v2/auth/login"
     curl --fail --silent \
         ${CURL_OPT} \
         ${QBT_COOKIES} \
