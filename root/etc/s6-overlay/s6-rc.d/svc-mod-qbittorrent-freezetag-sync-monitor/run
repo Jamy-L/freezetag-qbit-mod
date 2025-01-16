@@ -113,10 +113,12 @@ fetch_sync_data() {
 
     # Save new RID
     echo "$new_rid" > "$RID_FILE"
+    echo "New RID: $new_rid"
+    echo "Removed torrents: $torrents_removed"
 
     # Handle removed torrents
     if [[ -n "$torrents_removed" ]]; then
-        log "Detected removed torrents: $torrents_removed"
+        log_debug "Detected removed torrents: $torrents_removed"
         for torrent_hash in $torrents_removed; do
             torrent_hash=$(echo "$torrent_hash" | tr -d '"')
             # handle_removed_torrent "$torrent_hash"
