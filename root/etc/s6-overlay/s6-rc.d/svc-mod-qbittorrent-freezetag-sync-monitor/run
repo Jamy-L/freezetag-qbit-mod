@@ -5,7 +5,7 @@
 # Adapted from https://github.com/t-anc/GSP-Qbittorent-Gluetun-sync-port-mod/blob/main/root/etc/s6-overlay/s6-rc.d/svc-mod-gluetun-sync-port/run
 
 # Configuration Variables
-MAX_SLEEP_TIME="${FTAG_SLEEP:-60}"   # Maximum sleep interval
+MAX_SLEEP_TIME="${FTAG_SLEEP:-10}"   # Maximum sleep interval
 RETRY_DELAY="${FTAG_RETRY_DELAY:-10}"  # Retry delay on errors
 INIT_RETRY_WAIT="${FTAG_INIT_RETRY_WAIT:-10}"  # Initial retry wait time
 DEBUG="${DOCKER_MODS_DEBUG:-false}"
@@ -25,7 +25,9 @@ log() {
     echo "[mod-freezetag] ${1}"
 }
 log_debug() {
-    echo "[mod-freezetag] (DEBUG) ${1}"
+    if [ "${DEBUG,,}" = 'true' ]; then
+        echo "[mod-freezetag] (DEBUG) ${1}"
+    fi
 }
 
 
@@ -92,35 +94,36 @@ init_checks(){
   fi
 }
 
-# fetch_sync_data() {
-#     local rid="${1:-0}"  # Default to 0 if no RID provided
-#     local response
+fetch_sync_data() {
+    local rid="${1:-0}"  # Default to 0 if no RID provided
+    local response
 
-#     response=$(curl --silent --fail \
-#         ${QBT_COOKIES} \
-#         --url "${QBITTORRENT}/api/v2/sync/maindata?rid=${rid}" 2>/dev/null)
+    response=$(curl --silent --fail \
+        ${QBT_COOKIES} \
+        --url "${QBITTORRENT}/api/v2/sync/maindata?rid=${rid}" 2>/dev/null)
 
-#     if [[ $? -ne 0 || -z "$response" ]]; then
-#         log "ERROR: Failed to fetch data from /sync/maindata."
-#         return 1
-#     fi
+    if [[ $? -ne 0 || -z "$response" ]]; then
+        log "ERROR: Failed to fetch data from /sync/maindata."
+        return 1
+    fi
 
-#     # Parse response
-#     local new_rid=$(echo "$response" | jq -r '.rid')
-#     local torrents_removed=$(echo "$response" | jq -c '.torrents_removed[]?')
+    # Parse response
+    local new_rid=$(echo "$response" | jq -r '.rid')
+    local torrents_removed=$(echo "$response" | jq -c '.torrents_removed[]?')
 
-#     # Save new RID
-#     echo "$new_rid" > "$RID_FILE"
+    # Save new RID
+    echo "$new_rid" > "$RID_FILE"
 
-#     # Handle removed torrents
-#     if [[ -n "$torrents_removed" ]]; then
-#         log "Detected removed torrents: $torrents_removed"
-#         for torrent_hash in $torrents_removed; do
-#             torrent_hash=$(echo "$torrent_hash" | tr -d '"')
-#             handle_removed_torrent "$torrent_hash"
-#         done
-#     fi
-# }
+    # Handle removed torrents
+    if [[ -n "$torrents_removed" ]]; then
+        log "Detected removed torrents: $torrents_removed"
+        for torrent_hash in $torrents_removed; do
+            torrent_hash=$(echo "$torrent_hash" | tr -d '"')
+            # handle_removed_torrent "$torrent_hash"
+        done
+    fi
+    log_debug "Done processing sync data. Next try in $MAX_SLEEP_TIME seconds."
+}
 
 # handle_removed_torrent() {
 #     local torrent_hash=$1
@@ -149,7 +152,7 @@ main() {
         rid=$(cat "$RID_FILE")
     fi
 
-    log "Starting torrent removal tracker with RID=$rid"
+    log_debug "Starting torrent removal tracker with RID=$rid"
 
     while :; do
         # fetch_sync_data "$rid"
