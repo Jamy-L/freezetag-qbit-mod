@@ -1,10 +1,5 @@
 #!/bin/bash
 
-# Read FREEZE_CATEGORY from the environment, default to an empty string if not set
-FREEZE_CATEGORY="${FREEZE_CATEGORY:-}"
-DOCKER_MODS_DEBUG="${DOCKER_MODS_DEBUG:-false}"
-CATEGORY_UMASK="${CATEGORY_UMASK:-}"
-
 # Function for logging with timestamps
 log() {
     echo "[Freezetag] $(date '+%m/%d/%y %H:%M:%S') $1"
@@ -16,6 +11,12 @@ debug_log() {
         echo "[Freezetag] (DEBUG) $(date '+%m/%d/%y %H:%M:%S') $1"
     fi
 }
+
+# Read FREEZE_CATEGORY from the environment, default to an empty string if not set
+FREEZE_CATEGORY="${FREEZE_CATEGORY:-}"
+DOCKER_MODS_DEBUG="${DOCKER_MODS_DEBUG:-false}"
+CATEGORY_UMASK="${CATEGORY_UMASK:-}"
+
 
 # Main script logic
 if [[ $# -ne 2 ]]; then
