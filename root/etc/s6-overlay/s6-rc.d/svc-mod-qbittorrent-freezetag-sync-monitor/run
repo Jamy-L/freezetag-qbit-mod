@@ -5,7 +5,7 @@
 # Adapted from https://github.com/t-anc/GSP-Qbittorent-Gluetun-sync-port-mod/blob/main/root/etc/s6-overlay/s6-rc.d/svc-mod-gluetun-sync-port/run
 
 # Configuration Variables
-MAX_SLEEP_TIME="${FTAG_SLEEP:-10}"   # Maximum sleep interval
+MAX_SLEEP_TIME="${FTAG_SLEEP:-60}"   # Maximum sleep interval
 RETRY_DELAY="${FTAG_RETRY_DELAY:-10}"  # Retry delay on errors
 INIT_RETRY_WAIT="${FTAG_INIT_RETRY_WAIT:-10}"  # Initial retry wait time
 DEBUG="${DOCKER_MODS_DEBUG:-false}"
@@ -125,7 +125,8 @@ fetch_sync_data() {
         return 1
     fi
     echo "$new_rid" > "$RID_FILE"
-    log_debug "Parsed new RID: $new_rid"
+    log_debug "$(date +"%Y-%m-%d %H:%M:%S") Parsed new RID: $new_rid"
+
 
     # Parse removed torrents
     torrents_removed=$(echo "$response" | jq -c '.torrents_removed[]?')
