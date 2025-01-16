@@ -16,6 +16,7 @@ QBT_USERNAME="${FTAG_QBT_USERNAME}"
 QBT_PASSWORD="${FTAG_QBT_PASSWORD}"
 QBT_COOKIES="--cookie-jar /tmp/cookies.txt --cookie /tmp/cookies.txt"
 [ "${FTAG_CERT_CHECK,,}" = 'false' ] && CURL_OPT='--insecure'
+CONF_FILE='/config/qBittorrent/qBittorrent.conf'
 
 RID_FILE="/tmp/qbittorrent_rid"  # Store the last response ID
 
