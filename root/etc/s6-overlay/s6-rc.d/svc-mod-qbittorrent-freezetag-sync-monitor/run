@@ -1,0 +1,161 @@
+#!/usr/bin/with-contenv bash
+# shellcheck shell=bash
+
+# This script monitors qBittorrent for removed torrents and deletes orphan .ftag files
+# Adapted from https://github.com/t-anc/GSP-Qbittorent-Gluetun-sync-port-mod/blob/main/root/etc/s6-overlay/s6-rc.d/svc-mod-gluetun-sync-port/run
+
+# Configuration Variables
+MAX_SLEEP_TIME="${FTAG_SLEEP:-60}"   # Maximum sleep interval
+RETRY_DELAY="${FTAG_RETRY_DELAY:-10}"  # Retry delay on errors
+INIT_RETRY_WAIT="${FTAG_INIT_RETRY_WAIT:-10}"  # Initial retry wait time
+DEBUG="${DOCKER_MODS_DEBUG:-false}"
+
+QBITTORRENT="${FTAG_QBT_ADDR:-http://localhost:8080}"
+[ -n "${FTAG_QBT_PASSWORD_FILE}" ] && FTAG_QBT_PASSWORD="$(cat "${FTAG_QBT_PASSWORD_FILE}")"
+QBT_USERNAME="${FTAG_QBT_USERNAME}"
+QBT_PASSWORD="${FTAG_QBT_PASSWORD}"
+QBT_COOKIES="--cookie-jar /tmp/cookies.txt --cookie /tmp/cookies.txt"
+[ "${FTAG_CERT_CHECK,,}" = 'false' ] && CURL_OPT='--insecure'
+
+RID_FILE="/tmp/qbittorrent_rid"  # Store the last response ID
+
+# Functions
+log() {
+    echo "[mod-freezetag] ${1}"
+}
+log_debug() {
+    echo "[mod-freezetag] (DEBUG) ${1}"
+}
+
+
+qbt_login() {
+    curl --fail --silent \
+        ${QBT_COOKIES} \
+        --url "${QBITTORRENT}/api/v2/auth/login" \
+        --data "username=${QBT_USERNAME}" \
+        --data "password=${QBT_PASSWORD}" || log "ERROR: Authentication failed"
+}
+
+init_checks(){
+  # Enable or not init_checks
+  if [ "${FTAG_SKIP_INIT_CHECKS,,}" = 'true' ]; then
+    return 0
+  else
+    MSG_prefix="ERROR:"
+  fi
+
+  # Check 1 : 
+  #   In case of HTTPS, check if qBittorrent is using a trusted certificate.
+
+  if echo "${QBITTORRENT}" | grep -iq 'https://' ;then
+    curl ${CURL_OPT} --silent --output /dev/null "${QBITTORRENT}"
+    if [ "$?" -eq '60' ]; then
+      err='true'
+      log "${MSG_prefix} Your qBittorrent certificate is untrusted. See HTTPS section in https://github.com/t-anc/GSP-Qbittorent-Gluetun-sync-port-mod#troubleshooting."
+    fi
+  fi
+
+  # Check 2 : 
+  #   Check for the auth bypass in qbittorrent's config file,
+  #   or check for bad credentials.
+
+  if [ ! -f "${CONF_FILE}" ]; then
+    log "${CONF_FILE} not found, can't check the The \"Bypass authentication for clients on localhost\" setting. Running in standalone mode."
+  else
+    if { [ -z "${QBT_USERNAME}" ] || [ -z "${QBT_PASSWORD}" ] ;} && [ "$(grep 'LocalHostAuth' ${CONF_FILE} | awk -F'=' '{print $2}')" != "false" ]; then
+      err='true'
+      log "${MSG_prefix} The \"Bypass authentication for clients on localhost\" setting is not set."
+    elif [ -n "${QBT_USERNAME}" ] && [ -n "${QBT_PASSWORD}" ] && [ "$(qbt_login)" != "Ok." ]; then
+      err='true'
+      log "${MSG_prefix} Qbittorrent authentication failed, check the credentials."
+    fi
+  fi
+
+  # Check 3 :
+  #   Check for "Host header validation".
+  if [ "$(curl ${CURL_OPT} --write-out '%{http_code}' --silent --output /dev/null "${QBITTORRENT}")" -eq 401 ]; then
+    err='true'
+    log "${MSG_prefix} Qbittorrent returned 401. Is the \"Enable Host header validation\" setting set ? Is $(basename "${QBITTORRENT%:*}") whitelisted ?"
+  fi
+
+
+  # Display Check results.
+  # In case of failed checks, enter an empty loop : 
+  #   -> exiting the script would make s6-overlay to re-run it.
+  if [ -n "${err}" ];then
+    log "Init checks failed, exiting the mod. You can disable init checks by setting \"FTAG_SKIP_INIT_CHECKS=true\"."
+    while :; do
+      sleep 3600
+    done
+  else
+    log "Init checks passed."
+  fi
+}
+
+# fetch_sync_data() {
+#     local rid="${1:-0}"  # Default to 0 if no RID provided
+#     local response
+
+#     response=$(curl --silent --fail \
+#         ${QBT_COOKIES} \
+#         --url "${QBITTORRENT}/api/v2/sync/maindata?rid=${rid}" 2>/dev/null)
+
+#     if [[ $? -ne 0 || -z "$response" ]]; then
+#         log "ERROR: Failed to fetch data from /sync/maindata."
+#         return 1
+#     fi
+
+#     # Parse response
+#     local new_rid=$(echo "$response" | jq -r '.rid')
+#     local torrents_removed=$(echo "$response" | jq -c '.torrents_removed[]?')
+
+#     # Save new RID
+#     echo "$new_rid" > "$RID_FILE"
+
+#     # Handle removed torrents
+#     if [[ -n "$torrents_removed" ]]; then
+#         log "Detected removed torrents: $torrents_removed"
+#         for torrent_hash in $torrents_removed; do
+#             torrent_hash=$(echo "$torrent_hash" | tr -d '"')
+#             handle_removed_torrent "$torrent_hash"
+#         done
+#     fi
+# }
+
+# handle_removed_torrent() {
+#     local torrent_hash=$1
+#     log "Handling removed torrent: $torrent_hash"
+
+#     # Find and delete orphan .ftag files and their directories
+#     local ftag_file=$(find /tracked_dir -name "${torrent_hash}.ftag" 2>/dev/null)
+#     if [[ -n "$ftag_file" ]]; then
+#         log "Found orphan .ftag file: $ftag_file. Deleting..."
+#         rm -f "$ftag_file"
+#         local parent_dir=$(dirname "$ftag_file")
+#         if [[ -z "$(ls -A "$parent_dir")" ]]; then
+#             log "Directory $parent_dir is empty. Deleting..."
+#             rmdir "$parent_dir"
+#         fi
+#     else
+#         log "No orphan .ftag file found for torrent hash: $torrent_hash."
+#     fi
+# }
+
+main() {
+    init_checks
+
+    local rid=0
+    if [[ -f "$RID_FILE" ]]; then
+        rid=$(cat "$RID_FILE")
+    fi
+
+    log "Starting torrent removal tracker with RID=$rid"
+
+    while :; do
+        # fetch_sync_data "$rid"
+        sleep "${MAX_SLEEP_TIME}"
+    done
+}
+
+# Start the script
+main
