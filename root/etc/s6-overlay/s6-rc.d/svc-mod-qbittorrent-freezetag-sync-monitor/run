@@ -60,20 +60,14 @@ init_checks(){
   #   or check for bad credentials.
 
   if [ ! -f "${CONF_FILE}" ]; then
-    log "${CONF_FILE} not found, can't check the The \"Bypass authentication for clients on localhost\" setting. Running in standalone mode."
+    log "WARNING: ${CONF_FILE} not found, can't check the The \"Bypass authentication for clients on localhost\" setting. Running in standalone mode."
   else
-    echo "Attempting to login to qBittorrent with credentials : ${QBT_USERNAME} / ${QBT_PASSWORD}"
     if { [ -z "${QBT_USERNAME}" ] || [ -z "${QBT_PASSWORD}" ] ;} && [ "$(grep 'LocalHostAuth' ${CONF_FILE} | awk -F'=' '{print $2}')" != "false" ]; then
       err='true'
       log "Warning: The \"Bypass authentication for clients on localhost\" setting is not set."
-    elif [ -n "${QBT_USERNAME}" ] && [ -n "${QBT_PASSWORD}" ]; then
-        echo "Debug: Calling qbt_login function"
-        login_result=$(qbt_login)
-        echo "Debug: Login result: $login_result"
-        if [ "$login_result" != "Ok." ]; then
-            err='true'
-            log "Error: Qbittorrent authentication failed, check the credentials."
-        fi
+    elif [ -n "${QBT_USERNAME}" ] && [ -n "${QBT_PASSWORD}" ] && [ "$(qbt_login)" != "Ok." ]; then
+        err='true'
+        log "Error: Qbittorrent authentication failed, check the credentials."
     fi
   fi
 
