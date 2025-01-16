@@ -48,14 +48,14 @@ set_permissions() {
         default_permissions=777
         final_permissions=$((default_permissions & ~CATEGORY_UMASK))
         chmod $final_permissions "$1"
-        log "Applied umask to directory: $1 with permissions $final_permissions"
+        debug_log "Applied umask to directory: $1 with permissions $final_permissions"
 
     elif [ -f "$1" ] && [[ "$1" != *.ftag ]]; then # Process files (but not .ftag)
         # Default permissions for files is 666
         default_permissions=666
         final_permissions=$((default_permissions & ~CATEGORY_UMASK))
         chmod $final_permissions "$1"
-        log "Applied umask to file: $1 with permissions $final_permissions"
+        debug_log "Applied umask to file: $1 with permissions $final_permissions"
     fi
 }
 
@@ -73,6 +73,7 @@ if [[ "$category" == "$FREEZE_CATEGORY" ]]; then
 
         # Recursively find files and apply the set_permissions function
         export -f set_permissions
+        export -f debug_log
         find "$torrent_path" -type f -exec bash -c 'set_permissions "$0"' {} \;
     fi
 
