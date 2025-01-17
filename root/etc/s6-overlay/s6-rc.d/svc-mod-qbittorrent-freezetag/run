@@ -3,7 +3,7 @@
 FROZEN_DIR="${FTAG_DIR:-/frozen}"
 CATEG_FILE="/config/qBittorrent/categories.json"
 CATEGORY="${FTAG_DL_CATEGORY}"
-CATEGORY_FZ="${FTAG_FZ_CATEGORY}"
+CATEGORY_FZ="${FTAG_FZ_CATEGORY:-${CATEGORY_DL}_frozen}"
 
 log() {
     echo "[mod-freezetag] ${1}" >&2

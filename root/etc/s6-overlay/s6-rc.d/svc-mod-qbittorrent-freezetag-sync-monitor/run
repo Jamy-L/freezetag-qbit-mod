@@ -159,15 +159,14 @@ fetch_sync_data() {
 
 process_removed_torrents() {
     local sync_response=$1
-    local torrent_map=$2 # Now expecting the dictionary with hash as keys
+    local combined_data=$2
 
     local torrents_removed=$(echo "$sync_response" | jq -c '.torrents_removed[]?')
 
     if [[ -n "$torrents_removed" ]]; then
         for torrent_hash in $torrents_removed; do
 
-            # Directly access the torrent details using the hash as the key
-            local torrent_data=$(echo "$torrent_map" | jq --arg hash "$torrent_hash" '.[$hash]')
+            local torrent_data=$(echo "$combined_data" | jq --arg hash "$torrent_hash" '.torrents[$hash]')
             
             if [[ -n "$torrent_data" && "$torrent_data" != "null" ]]; then
                 local save_path=$(echo "$torrent_data" | jq -r '.save_path')
@@ -181,6 +180,7 @@ process_removed_torrents() {
         log_debug "No removed torrents detected."
     fi
 }
+
 
 check_removed_torrents() {
     local prev_response=$1
