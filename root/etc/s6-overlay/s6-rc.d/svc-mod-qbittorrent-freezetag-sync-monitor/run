@@ -17,7 +17,8 @@ QBT_PASSWORD="${FTAG_QBT_PASSWORD}"
 QBT_COOKIES="--cookie-jar /tmp/cookies.txt --cookie /tmp/cookies.txt"
 [ "${FTAG_CERT_CHECK,,}" = 'false' ] && CURL_OPT='--insecure'
 CONF_FILE='/config/qBittorrent/qBittorrent.conf'
-CATEGORY="${FTAG_CATEGORY:-}"
+CATEGORY_DL="${FTAG_DL_CATEGORY:-}"
+CATEGORY_FZ="${FTAG_FZ_CATEGORY:-${CATEGORY_DL}_frozen}"
 
 RESPONSE_FILE="/tmp/qbittorrent_rid"  # Store the last response ID
 
@@ -114,7 +115,14 @@ fetch_full_torrent_list() {
     local response=$(curl --silent --fail \
         ${CURL_OPT} \
         ${QBT_COOKIES} \
-        --url "${QBITTORRENT}/api/v2/torrents/info?category=${CATEGORY}" 2>/dev/null)
+        --url "${QBITTORRENT}/api/v2/torrents/info?category=${CATEGORY_DL}" 2>/dev/null)
+    local response_2=$(curl --silent --fail \
+        ${CURL_OPT} \
+        ${QBT_COOKIES} \
+        --url "${QBITTORRENT}/api/v2/torrents/info?category=${CATEGORY_FZ}" 2>/dev/null)
+
+    # Concatenate both lists : We want torrents from both categories.
+    response=$(echo "$response" "$response_2" | jq -s 'add')
 
     if [[ $? -ne 0 || -z "$response" ]]; then
         log "ERROR: Failed to fetch full torrent list for category: $CATEGORY."
@@ -151,7 +159,7 @@ fetch_sync_data() {
 
 process_removed_torrents() {
     local sync_response=$1
-    local torrent_list=$2
+    local torrent_map=$2 # Now expecting the dictionary with hash as keys
 
     local torrents_removed=$(echo "$sync_response" | jq -c '.torrents_removed[]?')
 
@@ -159,16 +167,15 @@ process_removed_torrents() {
         for torrent_hash in $torrents_removed; do
             torrent_hash=$(echo "$torrent_hash" | tr -d '"')
 
-            # Find the removed torrent in the full list
-            local torrent_data=$(echo "$combined_data" | jq --arg hash "$torrent_hash" \
-                '.torrents[] | select(.hash == $hash)')
+            # Directly access the torrent details using the hash as the key
+            local torrent_data=$(echo "$torrent_map" | jq --arg hash "$torrent_hash" '.[$hash]')
             
-            if [[ -n "$torrent_data" ]]; then
+            if [[ -n "$torrent_data" && "$torrent_data" != "null" ]]; then
                 local save_path=$(echo "$torrent_data" | jq -r '.save_path')
                 log_debug "Removed torrent: $torrent_hash"
                 log_debug "Save Path: $save_path"
             else
-                log_debug "No matching torrent in the $CATEGORY category found for hash: $torrent_hash"
+                log_debug "No matching torrent in the $CATEGORY_DL and $CATEGORY_FZ categories found for hash: $torrent_hash"
             fi
         done
     else
