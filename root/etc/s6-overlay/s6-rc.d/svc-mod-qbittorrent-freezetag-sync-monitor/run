@@ -102,9 +102,10 @@ fetch_sync_data() {
     local nocache=$(date +%s%N)  # Generate a timestamp-based nocache value
 
     log_debug "Fetching /sync/maindata with RID: $rid"
+    log "Sending request to ${QBITTORRENT}/api/v2/sync/maindata?rid=${rid}&nocache=${nocache}"
 
     # Fetch data
-    response=$(curl --silent --fail \
+    response=$(curl --silent --fail --get \
         ${QBT_COOKIES} \
         --url "${QBITTORRENT}/api/v2/sync/maindata?rid=${rid}&nocache=${nocache}" 2>/dev/null)
 
