@@ -205,7 +205,7 @@ process_removed_torrents() {
                             log_debug "Removing .ftag files in $full_folder_path"
                             rm -f "$ftag_files" # Ensure quotes around $ftag_files to handle any spaces
                             # if the folder is now empty, remove it
-                            if [[ -z "$(ls -A $full_folder_path)" ]]; then
+                            if [[ -z "$(ls -A "$full_folder_path")" ]]; then
                                 log_debug "Folder is now empty, removing: $full_folder_path"
                                 rmdir "$full_folder_path"
                             fi
