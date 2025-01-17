@@ -1,7 +1,7 @@
 #!/usr/bin/with-contenv bash
 
-FROZEN_DIR="${FTAG_DIR:-/frozen}"
-CATEG_FILE="config/qBittorrent/categories.json"
+FROZEN_DIR="${FTAG_DIR:-}"
+CATEG_FILE="/config/qBittorrent/categories.json"
 CATEGORY="${FTAG_CATEGORY}"
 
 log() {
@@ -75,6 +75,24 @@ init_checks(){
 }
 
 ## 
+
+# Create the freeze folder if it doesn't exist
+if [ ! -d "${FROZEN_DIR}" ]; then
+  log_debug "The FROZEN_DIR (${FROZEN_DIR}) does not exist. Creating it..."
+  mkdir -p "${FROZEN_DIR}"
+  if [ $? -ne 0 ]; then
+    log "Error: Failed to create the FROZEN_DIR (${FROZEN_DIR})."
+    exit 1
+  fi
+
+  if [[ -z ${LSIO_NON_ROOT_USER} ]]; then
+    # chown download directory if currently not set to abc
+    lsiown -R abc:abc \
+      /$FROZEN_DIR
+    log_debug "Setting owner of FROZEN_DIR (${FROZEN_DIR}) to abc:abc"
+  fi
+fi
+
 init_checks
 
 # Get Category path
