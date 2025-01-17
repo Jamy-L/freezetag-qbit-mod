@@ -128,12 +128,12 @@ fetch_full_torrent_list() {
         log "ERROR: Failed to fetch full torrent list for category: $CATEGORY."
         return 1
     fi
-    log_debug "Full torrent list response: $response"
+    # log_debug "Full torrent list response: $response"
 
     # Use jq to transform the list into a dictionary mapping each hash to its torrent details
     response=$(echo "$response" | jq -c 'reduce .[] as $item ({}; .[$item.hash] = $item)')
 
-    log_debug "Full torrent list response reformatted: $response"
+    # log_debug "Full torrent list response reformatted: $response"
     
     echo "$response"
 }
@@ -162,11 +162,13 @@ process_removed_torrents() {
     local combined_data=$2
 
     local torrents_removed=$(echo "$sync_response" | jq -c '.torrents_removed[]?')
+    log_debug "Database: $combined_data"
 
     if [[ -n "$torrents_removed" ]]; then
         for torrent_hash in $torrents_removed; do
-
+            log_debug "Processing removed torrent: $torrent_hash"
             local torrent_data=$(echo "$combined_data" | jq --arg hash "$torrent_hash" '.torrents[$hash]')
+            log_debug "Torrent data: $torrent_data"
             
             if [[ -n "$torrent_data" && "$torrent_data" != "null" ]]; then
                 local save_path=$(echo "$torrent_data" | jq -r '.save_path')

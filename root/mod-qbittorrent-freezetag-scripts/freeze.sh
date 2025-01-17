@@ -13,7 +13,7 @@ debug_log() {
 }
 
 # Read FREEZE_CATEGORY from the environment, default to an empty string if not set
-CATEGORY="${FTAG_CATEGORY:-}"
+CATEGORY="${FTAG_DL_CATEGORY:-}"
 DOCKER_MODS_DEBUG="${DOCKER_MODS_DEBUG:-false}"
 UMASK="${FTAG_UMASK:-}"
 
