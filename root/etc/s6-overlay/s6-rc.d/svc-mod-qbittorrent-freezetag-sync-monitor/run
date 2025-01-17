@@ -99,22 +99,18 @@ update_combined_data() {
     local full_list=$1
     local rid=$2
 
-    log_debug "Updating combined data structure with RID: $rid"
-    
     # Construct the JSON structure
     local combined=$(jq -n --argjson torrents "$full_list" --arg rid "$rid" \
         '{rid:($rid | tonumber),torrents:$torrents}')
     
     # Save the combined structure to a file
     echo "$combined" > "$RESPONSE_FILE"
-    log_debug "Combined data structure updated and saved: $combined"
     
     # Return the combined JSON
     echo "$combined"
 }
 
 fetch_full_torrent_list() {
-    log_debug "Fetching full torrent list for category: $CATEGORY"
     local response=$(curl --silent --fail \
         ${CURL_OPT} \
         ${QBT_COOKIES} \
@@ -128,7 +124,6 @@ fetch_full_torrent_list() {
     # Use jq to transform the list into a dictionary mapping each hash to its torrent details
     response=$(echo "$response" | jq -c 'reduce .[] as $item ({}; .[$item.hash] = $item)')
     
-    log_debug "Full torrent list response: $response"
     echo "$response"
 }
 
@@ -180,7 +175,6 @@ process_removed_torrents() {
 
 check_removed_torrents() {
     local prev_response=$1
-    log_debug "l 183 : $prev_response"
     local rid=$(echo "$prev_response" | jq -r '.rid')
     local sync_response
     local new_rid
@@ -195,7 +189,6 @@ check_removed_torrents() {
         log "ERROR: Failed to parse RID from response."
         return 1
     fi
-    log_debug "$(date +"%Y-%m-%d %H:%M:%S") Parsed new RID: $new_rid"
 
     # Remove the .ftag for the removed torrents if applicable
     process_removed_torrents "$sync_response" "$prev_response"
@@ -228,7 +221,6 @@ init_checks
 response=$(init_response)
 
 while :; do
-    log_debug "Calling fetch_sync_data with RID=$(echo "$response" | jq -r '.rid')"
     response=$(check_removed_torrents "$response")
     log_debug "Full response after check_removed_torrents: $response"
     sleep "${MAX_SLEEP_TIME}"
