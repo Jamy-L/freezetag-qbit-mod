@@ -1,36 +1,21 @@
 #!/usr/bin/with-contenv bash
 
+FROZEN_DIR="${FROZEN_DIR:-/frozen}"
+CATEG_FILE="config/qBittorrent/categories.json"
+CATEGORY="${FREEZE_CATEGORY}"
 
 log() {
-    echo "[mod-freezetag] $1"
+    echo "[mod-freezetag] ${1}" >&2
+}
+log_debug() {
+    if [ "${DEBUG,,}" = 'true' ]; then
+        echo "[mod-freezetag] (DEBUG) ${1}" >&2
+    fi
 }
 
 # Check if DOCKER_MODS_DEBUG is set and true
 if [[ "${DOCKER_MODS_DEBUG}" == "true" ]]; then
-    echo "[mod-freezetag] (DEBUG) Starting svc-qbittorrent-freezetag..."
-fi
-
-
-
-# Check if the CATEGORY_DIR and FROZEN_DIR environment variables are set and that the directories exist
-if [[ -z "${CATEGORY_DIR}" ]]; then
-    log "Error: The CATEGORY_DIR environment variables must be set."
-    exit 1
-fi
-
-if [[ -z "${FROZEN_DIR}" ]]; then
-    log "Error: The FROZEN_DIR environment variables must be set."
-    exit 1
-fi
-
-if [[ ! -d "${CATEGORY_DIR}" ]]; then
-    log "Error: The CATEGORY_DIR (${CATEGORY_DIR}) does not exist."
-    exit 1
-fi
-
-if [[ ! -d "${FROZEN_DIR}" ]]; then
-    log "Error: The FROZEN_DIR (${FROZEN_DIR}) does not exist."
-    exit 1
+    log_debug "Starting svc-qbittorrent-freezetag..." >&2
 fi
 
 # Check if the FROZEN_DIR is empty
@@ -39,11 +24,72 @@ if [ ! -z "$(find ${FROZEN_DIR} -mindepth 1 -print -quit)" ]; then
     exit 1
 fi
 
+
+init_checks(){
+  # Enable or not init_checks
+  if [ "${FTAG_SKIP_INIT_CHECKS,,}" = 'true' ]; then
+    return 0
+  fi
+
+
+  ## Check 1 :
+  # Check that the FROZEN_DIR exists
+  if [ ! -d "${FROZEN_DIR}" ]; then
+    err='true'
+    log "Error: The FROZEN_DIR (${FROZEN_DIR}) does not exist."
+  fi
+
+  # Check 2 :
+  # Check that it is empty
+  if [ ! -z "$(find ${FROZEN_DIR} -mindepth 1 -print -quit)" ]; then
+    err='true'
+    log "Error: The FROZEN_DIR (${FROZEN_DIR}) is not empty."
+  fi
+
+  ## Check 4 :
+  # Check that the required category exists
+  SAVE_PATH=$(jq -r --arg category "$CATEGORY" '.[$category].save_path // empty' "$CATEG_FILE")
+  if [ -n "$SAVE_PATH" ]; then
+    log_debug "Category: $CATEGORY"
+  else
+    log "Error: '$CATEGORY' is not a valid category."
+  fi
+
+  ## Check 5
+  # Check that the category path exists
+  if [ ! -d "$SAVE_PATH" ]; then
+    log "Error: The category path '$SAVE_PATH' does not exist."
+  fi
+
+  # Display Check results.
+  # In case of failed checks, enter an empty loop : 
+  #   -> exiting the script would make s6-overlay to re-run it.
+  if [ -n "${err}" ];then
+    log "Error: Init checks failed, exiting the mod. You can disable init checks by setting \"FTAG_SKIP_INIT_CHECKS=true\"."
+    while :; do
+      sleep 3600
+    done
+  else
+    log "Init checks passed."
+  fi
+}
+
+## 
+init_checks
+
+# Get Category path
+CATEGORY_DIR=$(jq -r --arg category "$CATEGORY" '.[$category].save_path' "$CATEG_FILE")
+
+
 spaces='                                                            '
-CAT_display="${FREEZE_CATEGORY}${spaces}"
+CAT_display="${CATEGORY}${spaces}"
 CAT_DIR_display="${CATEGORY_DIR}${spaces}"
 FRO_DIR_display="${FROZEN_DIR}${spaces}"
-CAT_UMASK_display="${CATEGORY_UMASK}${spaces}"
+if [ -z "${CATEGORY_UMASK}" ]; then
+    CAT_UMASK_display="unset${spaces}"
+else
+    CAT_UMASK_display="${CATEGORY_UMASK}${spaces}"
+fi
 echo "\
 +---------------------------------------------------------+
 |                     Freezetag mod loaded                |

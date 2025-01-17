@@ -137,8 +137,6 @@ fetch_sync_data() {
     if [[ -n "$torrents_removed" ]]; then
         for torrent_hash in $torrents_removed; do
             torrent_hash=$(echo "$torrent_hash" | tr -d '"')
-            log_debug "Processing removed torrent: $torrent_hash"
-            # Uncomment the following line to call your handler function
             # handle_removed_torrent "$torrent_hash"
         done
     else
@@ -152,7 +150,7 @@ fetch_sync_data() {
 
 # handle_removed_torrent() {
 #     local torrent_hash=$1
-#     log "Handling removed torrent: $torrent_hash"
+#     log_debug "Handling removed torrent: $torrent_hash"
 
 #     # Find and delete orphan .ftag files and their directories
 #     local ftag_file=$(find /tracked_dir -name "${torrent_hash}.ftag" 2>/dev/null)

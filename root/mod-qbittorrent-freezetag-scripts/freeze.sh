@@ -2,18 +2,18 @@
 
 # Function for logging with timestamps
 log() {
-    echo "[Freezetag] $(date '+%m/%d/%y %H:%M:%S') $1"
+    echo "[Freezetag] $(date '+%m/%d/%y %H:%M:%S') $1" >&2
 }
 
 # Function for debug logging
 debug_log() {
     if [[ "$DOCKER_MODS_DEBUG" == "true" ]]; then
-        echo "[Freezetag] (DEBUG) $(date '+%m/%d/%y %H:%M:%S') $1"
+        echo "[Freezetag] (DEBUG) $(date '+%m/%d/%y %H:%M:%S') $1" >&2
     fi
 }
 
 # Read FREEZE_CATEGORY from the environment, default to an empty string if not set
-FREEZE_CATEGORY="${FREEZE_CATEGORY:-}"
+CATEGORY="${FREEZE_CATEGORY:-}"
 DOCKER_MODS_DEBUG="${DOCKER_MODS_DEBUG:-false}"
 CATEGORY_UMASK="${CATEGORY_UMASK:-}"
 
