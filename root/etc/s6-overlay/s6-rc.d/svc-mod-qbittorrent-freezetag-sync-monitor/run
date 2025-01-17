@@ -27,7 +27,7 @@ log() {
 }
 log_debug() {
     if [ "${DEBUG,,}" = 'true' ]; then
-        echo "[mod-freezetag] (DEBUG) ${1}" >&2
+        echo "[mod-freezetag] (Debug) ${1}" >&2
     fi
 }
 
@@ -203,9 +203,9 @@ check_removed_torrents() {
 init_response() {
   if [[ -f "$RESPONSE_FILE" ]]; then
       response=$(cat "$RESPONSE_FILE")
-      log_debug "Debug: Read RID from file."
+      log_debug "Read RID from file."
   else
-      log_debug "Debug: RID file not found, using default RID=0 with full torrent list fetch."
+      log_debug "RID file not found, using default RID=0 with full torrent list fetch."
       response=$(fetch_full_torrent_list)
       response=$(update_combined_data "$response" "0")
   fi
@@ -219,7 +219,8 @@ init_checks
 response=$(init_response)
 
 while :; do
-    log_debug "Debug: Calling fetch_sync_data with RID=$(echo "$response" | jq -r '.rid')"
+    log_debug "Calling fetch_sync_data with RID=$(echo "$response" | jq -r '.rid')"
     response=$(check_removed_torrents $reponse)
+    log_debug "Full response after check_removed_torrents: $response"
     sleep "${MAX_SLEEP_TIME}"
 done
