@@ -197,7 +197,7 @@ check_removed_torrents() {
 
 
     log_debug "Done processing sync data. Next try in $MAX_SLEEP_TIME seconds."
-    echo $new_rid
+    echo $new_response
 }
 
 init_response() {
