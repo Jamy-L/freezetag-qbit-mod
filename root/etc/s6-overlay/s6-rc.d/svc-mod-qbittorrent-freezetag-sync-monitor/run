@@ -5,7 +5,7 @@
 # Adapted from https://github.com/t-anc/GSP-Qbittorent-Gluetun-sync-port-mod/blob/main/root/etc/s6-overlay/s6-rc.d/svc-mod-gluetun-sync-port/run
 
 # Configuration Variables
-MAX_SLEEP_TIME="${FTAG_SLEEP:-60}"   # Maximum sleep interval
+MAX_SLEEP_TIME="${FTAG_SLEEP:-15}"   # Maximum sleep interval
 RETRY_DELAY="${FTAG_RETRY_DELAY:-10}"  # Retry delay on errors
 INIT_RETRY_WAIT="${FTAG_INIT_RETRY_WAIT:-10}"  # Initial retry wait time
 DEBUG="${DOCKER_MODS_DEBUG:-false}"
@@ -175,15 +175,15 @@ main() {
     local rid=0
     if [[ -f "$RID_FILE" ]]; then
         rid=$(cat "$RID_FILE")
-        echo "Debug: Read RID from file: $rid"  # Add this line to check the value from the file
+        log_debug "Debug: Read RID from file: $rid"  # Add this line to check the value from the file
     else
-        echo "Debug: RID file not found, using default RID=0"
+        log_debug "Debug: RID file not found, using default RID=0"
     fi
 
     log_debug "Starting torrent removal tracker with RID=$rid"
 
     while :; do
-        echo "Debug: Calling fetch_sync_data with RID=$rid"  # Debugging the call
+        log_debug "Debug: Calling fetch_sync_data with RID=$rid"  # Debugging the call
         rid=$(fetch_sync_data "$rid")
         sleep "${MAX_SLEEP_TIME}"
     done
