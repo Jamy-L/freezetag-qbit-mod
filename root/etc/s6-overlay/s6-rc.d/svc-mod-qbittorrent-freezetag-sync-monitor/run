@@ -229,7 +229,7 @@ response=$(init_response)
 
 while :; do
     log_debug "Calling fetch_sync_data with RID=$(echo "$response" | jq -r '.rid')"
-    response=$(check_removed_torrents $response)
+    response=$(check_removed_torrents "$response")
     log_debug "Full response after check_removed_torrents: $response"
     sleep "${MAX_SLEEP_TIME}"
 done
