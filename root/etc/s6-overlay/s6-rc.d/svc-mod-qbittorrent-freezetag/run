@@ -3,6 +3,7 @@
 FROZEN_DIR="${FTAG_DIR:-/frozen}"
 CATEG_FILE="/config/qBittorrent/categories.json"
 CATEGORY="${FTAG_DL_CATEGORY}"
+CATEGORY_FZ="${FTAG_FZ_CATEGORY}"
 
 log() {
     echo "[mod-freezetag] ${1}" >&2
@@ -103,6 +104,7 @@ CATEGORY_DIR=$(jq -r --arg category "$CATEGORY" '.[$category].save_path' "$CATEG
 
 spaces='                                                            '
 CAT_display="${CATEGORY}${spaces}"
+CAT_FZ_display="${CATEGORY_FZ}${spaces}"
 CAT_DIR_display="${CATEGORY_DIR}${spaces}"
 FRO_DIR_display="${FROZEN_DIR}${spaces}"
 if [ -z "${CATEGORY_UMASK}" ]; then
@@ -114,7 +116,8 @@ echo "\
 +---------------------------------------------------------+
 |                     Freezetag mod loaded                |
 +---------------------------------------------------------+
-|  Freeze  category    : ${CAT_display::33}|
+|  Download  category  : ${CAT_display::33}|
+|  Frozen  category    : ${CAT_FZ_display::33}|
 |  Category directory  : ${CAT_DIR_display::33}|
 |  Frozen directory    : ${FRO_DIR_display::33}|
 |  Category UMASK      : ${CAT_UMASK_display::33}|

@@ -165,7 +165,6 @@ process_removed_torrents() {
 
     if [[ -n "$torrents_removed" ]]; then
         for torrent_hash in $torrents_removed; do
-            torrent_hash=$(echo "$torrent_hash" | tr -d '"')
 
             # Directly access the torrent details using the hash as the key
             local torrent_data=$(echo "$torrent_map" | jq --arg hash "$torrent_hash" '.[$hash]')
