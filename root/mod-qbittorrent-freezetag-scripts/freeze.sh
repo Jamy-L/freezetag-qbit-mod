@@ -13,9 +13,9 @@ debug_log() {
 }
 
 # Read FREEZE_CATEGORY from the environment, default to an empty string if not set
-CATEGORY="${FREEZE_CATEGORY:-}"
+CATEGORY="${FTAG_CATEGORY:-}"
 DOCKER_MODS_DEBUG="${DOCKER_MODS_DEBUG:-false}"
-CATEGORY_UMASK="${CATEGORY_UMASK:-}"
+UMASK="${FTAG_UMASK:-}"
 
 
 # Main script logic
@@ -30,8 +30,8 @@ torrent_path="$2"
 
 debug_log "Script executed with arguments: $*"
 
-# Log if FREEZE_CATEGORY is empty
-if [[ -z "$FREEZE_CATEGORY" ]]; then
+# Log if CATEGORY is empty
+if [[ -z "$CATEGORY" ]]; then
     log "WARNING: FREEZE_CATEGORY is empty. No categories will be processed."
     exit 0
 fi
@@ -46,30 +46,30 @@ set_permissions() {
 
         # Default permissions for directories is 777
         default_permissions=777
-        final_permissions=$((default_permissions & ~CATEGORY_UMASK))
+        final_permissions=$((default_permissions & ~UMASK))
         chmod $final_permissions "$1"
         debug_log "Applied umask to directory: $1 with permissions $final_permissions"
 
     elif [ -f "$1" ] && [[ "$1" != *.ftag ]]; then # Process files (but not .ftag)
         # Default permissions for files is 666
         default_permissions=666
-        final_permissions=$((default_permissions & ~CATEGORY_UMASK))
+        final_permissions=$((default_permissions & ~UMASK))
         chmod $final_permissions "$1"
         debug_log "Applied umask to file: $1 with permissions $final_permissions"
     fi
 }
 
 
-# Check if the category matches FREEZE_CATEGORY
-if [[ "$category" == "$FREEZE_CATEGORY" ]]; then
-    debug_log "Category '$category' matches FREEZE_CATEGORY $FREEZE_CATEGORY. Freezing torrent data..."
+# Check if the category matches CATEGORY
+if [[ "$category" == "$CATEGORY" ]]; then
+    debug_log "Category '$category' matches FTAG_CATEGORY $CATEGORY. Freezing torrent data..."
     freezetag freeze "$torrent_path"
     debug_log "Freeze operation completed for path: $torrent_path."
 
 
     # Set the umask for the category if specified
-    if [[ -n "$CATEGORY_UMASK" ]]; then
-        debug_log "Setting umask $CATEGORY_UMASK for path: $torrent_path."
+    if [[ -n "$CUMASK" ]]; then
+        debug_log "Setting umask $UMASK for path: $torrent_path."
 
         # Recursively find files and apply the set_permissions function
         export -f set_permissions
@@ -79,5 +79,5 @@ if [[ "$category" == "$FREEZE_CATEGORY" ]]; then
 
 
 else
-    debug_log "Category '$category' does NOT match FREEZE_CATEGORY $FREEZE_CATEGORY. Skipping."
+    debug_log "Category '$category' does NOT match FTAG_CATEGORY $CATEGORY. Skipping."
 fi

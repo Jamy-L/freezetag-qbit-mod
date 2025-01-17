@@ -1,8 +1,8 @@
 #!/usr/bin/with-contenv bash
 
-FROZEN_DIR="${FROZEN_DIR:-/frozen}"
+FROZEN_DIR="${FTAG_DIR:-/frozen}"
 CATEG_FILE="config/qBittorrent/categories.json"
-CATEGORY="${FREEZE_CATEGORY}"
+CATEGORY="${FTAG_CATEGORY}"
 
 log() {
     echo "[mod-freezetag] ${1}" >&2
