@@ -22,11 +22,11 @@ RID_FILE="/tmp/qbittorrent_rid"  # Store the last response ID
 
 # Functions
 log() {
-    echo "[mod-freezetag] ${1}"
+    echo "[mod-freezetag] ${1} >&2"
 }
 log_debug() {
     if [ "${DEBUG,,}" = 'true' ]; then
-        echo "[mod-freezetag] (DEBUG) ${1}"
+        echo "[mod-freezetag] (DEBUG) ${1} >&2"
     fi
 }
 
@@ -146,7 +146,7 @@ fetch_sync_data() {
     fi
 
     log_debug "Done processing sync data. Next try in $MAX_SLEEP_TIME seconds."
-    echo "$new_rid"
+    echo $new_rid
 }
 
 
@@ -184,6 +184,6 @@ log_debug "Starting torrent removal tracker with RID=$rid"
 
 while :; do
     log_debug "Debug: Calling fetch_sync_data with RID=$rid"  # Debugging the call
-    rid=$(fetch_sync_data "$rid")
+    rid=$(fetch_sync_data $rid)
     sleep "${MAX_SLEEP_TIME}"
 done
