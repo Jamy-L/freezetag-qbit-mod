@@ -1,6 +1,6 @@
 #!/usr/bin/with-contenv bash
 
-FROZEN_DIR="${FTAG_DIR:-}"
+FROZEN_DIR="${FTAG_DIR:-/frozen}"
 CATEG_FILE="/config/qBittorrent/categories.json"
 CATEGORY="${FTAG_CATEGORY}"
 
