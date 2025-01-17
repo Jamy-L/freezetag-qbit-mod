@@ -103,10 +103,7 @@ update_combined_data() {
     
     # Construct the JSON structure
     local combined=$(jq -n --argjson torrents "$full_list" --arg rid "$rid" \
-        '{
-            rid: ($rid | tonumber),
-            torrents: $torrents
-        }')
+        '{rid:($rid | tonumber),torrents:$torrents}')
     
     # Save the combined structure to a file
     echo "$combined" > "$RESPONSE_FILE"
