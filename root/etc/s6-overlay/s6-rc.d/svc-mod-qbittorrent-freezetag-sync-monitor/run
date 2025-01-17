@@ -125,6 +125,9 @@ fetch_full_torrent_list() {
         return 1
     fi
 
+    # Use jq to transform the list into a dictionary mapping each hash to its torrent details
+    response=$(echo "$response" | jq -c 'reduce .[] as $item ({}; .[$item.hash] = $item)')
+    
     log_debug "Full torrent list response: $response"
     echo "$response"
 }
