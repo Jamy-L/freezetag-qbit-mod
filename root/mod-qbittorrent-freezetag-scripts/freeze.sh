@@ -8,7 +8,7 @@ log() {
 # Function for debug logging
 debug_log() {
     if [[ "$DOCKER_MODS_DEBUG" == "true" ]]; then
-        echo "[Freezetag] (DEBUG) $(date '+%m/%d/%y %H:%M:%S') $1" >&2
+        echo "[Freezetag] DEBUG: $(date '+%m/%d/%y %H:%M:%S') $1" >&2
     fi
 }
 

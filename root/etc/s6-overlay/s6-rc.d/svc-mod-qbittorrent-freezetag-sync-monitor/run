@@ -19,8 +19,12 @@ QBT_COOKIES="--cookie-jar /tmp/cookies.txt --cookie /tmp/cookies.txt"
 CONF_FILE='/config/qBittorrent/qBittorrent.conf'
 CATEGORY_DL="${FTAG_DL_CATEGORY:-}"
 CATEGORY_FZ="${FTAG_FZ_CATEGORY:-${CATEGORY_DL}_frozen}"
+CATEG_FILE="/config/qBittorrent/categories.json"
 
-RESPONSE_FILE="/tmp/qbittorrent_rid"  # Store the last response ID
+# Get Category path
+CATEGORY_DL_DIR=$(jq -r --arg category "$CATEGORY_DL" '.[$category].save_path' "$CATEG_FILE")
+
+RESPONSE_FILE="/config/qbittorrent_rid"  # Store the last response ID, persistant storage
 
 # Functions
 log() {
@@ -28,7 +32,7 @@ log() {
 }
 log_debug() {
     if [ "${DEBUG,,}" = 'true' ]; then
-        echo "[mod-freezetag] (Debug) ${1}" >&2
+        echo "[mod-freezetag] DEBUG: ${1}" >&2
     fi
 }
 
@@ -183,7 +187,7 @@ process_removed_torrents() {
                 if [[ -d "$content_path" ]]; then
                     # Extract folder name
                     local folder_name=$(basename "$content_path")
-                    local full_folder_path="$CATEGORY_DL/$folder_name"
+                    local full_folder_path="$CATEGORY_DL_DIR/$folder_name"
                     
                     # Check if the folder exists
                     if [[ -d "$full_folder_path" ]]; then
