@@ -95,7 +95,7 @@ init_checks(){
 }
 
 fetch_sync_data() {
-    local rid="${1:-0}"  # Default to 0 if no RID provided
+    local rid=$1
     local response
     local new_rid
     local torrents_removed
@@ -169,25 +169,21 @@ fetch_sync_data() {
 #     fi
 # }
 
-main() {
-    init_checks
+init_checks
 
-    local rid=0
-    if [[ -f "$RID_FILE" ]]; then
-        rid=$(cat "$RID_FILE")
-        log_debug "Debug: Read RID from file: $rid"  # Add this line to check the value from the file
-    else
-        log_debug "Debug: RID file not found, using default RID=0"
-    fi
+rid=0
 
-    log_debug "Starting torrent removal tracker with RID=$rid"
+if [[ -f "$RID_FILE" ]]; then
+    rid=$(cat "$RID_FILE")
+    log_debug "Debug: Read RID from file: $rid"  # Add this line to check the value from the file
+else
+    log_debug "Debug: RID file not found, using default RID=0"
+fi
 
-    while :; do
-        log_debug "Debug: Calling fetch_sync_data with RID=$rid"  # Debugging the call
-        rid=$(fetch_sync_data "$rid")
-        sleep "${MAX_SLEEP_TIME}"
-    done
-}
+log_debug "Starting torrent removal tracker with RID=$rid"
 
-# Start the script
-main
+while :; do
+    log_debug "Debug: Calling fetch_sync_data with RID=$rid"  # Debugging the call
+    rid=$(fetch_sync_data "$rid")
+    sleep "${MAX_SLEEP_TIME}"
+done
