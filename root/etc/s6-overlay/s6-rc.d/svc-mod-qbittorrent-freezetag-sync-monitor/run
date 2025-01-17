@@ -17,6 +17,7 @@ QBT_PASSWORD="${FTAG_QBT_PASSWORD}"
 QBT_COOKIES="--cookie-jar /tmp/cookies.txt --cookie /tmp/cookies.txt"
 [ "${FTAG_CERT_CHECK,,}" = 'false' ] && CURL_OPT='--insecure'
 CONF_FILE='/config/qBittorrent/qBittorrent.conf'
+CATEGORY="${FTAG_CATEGORY:-}"
 
 RID_FILE="/tmp/qbittorrent_rid"  # Store the last response ID
 
@@ -94,94 +95,131 @@ init_checks(){
   fi
 }
 
+update_combined_data() {
+    local full_list=$1
+    local rid=$2
+
+    log_debug "Updating combined data structure with RID: $rid"
+    local combined=$(jq -n --argjson torrents "$full_list" --arg rid "$rid" \
+        '{rid: $rid, torrents: $torrents}')
+    
+    echo "$combined" > "$TORRENT_LIST_FILE"
+    log_debug "Combined data structure updated and saved."
+    echo "$combined"
+}
+
+fetch_full_torrent_list() {
+    log_debug "Fetching full torrent list for category: $CATEGORY"
+    local response=$(curl --silent --fail \
+        ${CURL_OPT} \
+        ${QBT_COOKIES} \
+        --url "${QBITTORRENT}/api/v2/torrents/info?category=${CATEGORY}" 2>/dev/null)
+
+    if [[ $? -ne 0 || -z "$response" ]]; then
+        log "ERROR: Failed to fetch full torrent list for category: $CATEGORY."
+        return 1
+    fi
+
+    log_debug "Full torrent list response: $response"
+    echo "$response"
+}
+
 fetch_sync_data() {
     local rid=$1
-    local response
-    local new_rid
-    local torrents_removed
-    local nocache=$(date +%s%N)  # Generate a timestamp-based nocache value
+    local nocache=$(date +%s%N)
 
     log_debug "Fetching /sync/maindata with RID: $rid"
-    log "Sending request to ${QBITTORRENT}/api/v2/sync/maindata?rid=${rid}&nocache=${nocache}"
-
-    # Fetch data
-    response=$(curl --silent --fail --get \
+    local response=$(curl --silent --fail \
+        ${CURL_OPT} \
         ${QBT_COOKIES} \
         --url "${QBITTORRENT}/api/v2/sync/maindata?rid=${rid}&nocache=${nocache}" 2>/dev/null)
 
-    # Check if curl failed
     if [[ $? -ne 0 || -z "$response" ]]; then
-        log "ERROR: Failed to fetch data from /sync/maindata."
-        log_debug "Curl response was empty or failed. Response: $response"
+        log "ERROR: Failed to fetch sync data from /sync/maindata."
         return 1
     fi
 
-    # Log the raw response for debugging
-    log_debug "Raw response from /sync/maindata: $response"
+    log_debug "Sync data response: $response"
+    echo "$response"
+}
 
-    # Parse new RID
-    new_rid=$(echo "$response" | jq -r '.rid')
-    if [[ -z "$new_rid" ]]; then
-        log "ERROR: Failed to parse RID from response."
-        return 1
-    fi
-    echo "$new_rid" > "$RID_FILE"
-    log_debug "$(date +"%Y-%m-%d %H:%M:%S") Parsed new RID: $new_rid"
+process_removed_torrents() {
+    local sync_response=$1
+    local torrent_list=$2
 
+    local torrents_removed=$(echo "$sync_response" | jq -c '.torrents_removed[]?')
 
-    # Parse removed torrents
-    torrents_removed=$(echo "$response" | jq -c '.torrents_removed[]?')
-    log_debug "Parsed removed torrents: $torrents_removed"
-
-    # Handle removed torrents
     if [[ -n "$torrents_removed" ]]; then
         for torrent_hash in $torrents_removed; do
             torrent_hash=$(echo "$torrent_hash" | tr -d '"')
-            # handle_removed_torrent "$torrent_hash"
+
+            # Find the removed torrent in the full list
+            local torrent_data=$(echo "$combined_data" | jq --arg hash "$torrent_hash" \
+                '.torrents[] | select(.hash == $hash)')
+            
+            if [[ -n "$torrent_data" ]]; then
+                local save_path=$(echo "$torrent_data" | jq -r '.save_path')
+                log_debug "Removed torrent: $torrent_hash"
+                log_debug "Save Path: $save_path"
+            else
+                log_debug "No matching torrent in the $CATEGORY category found for hash: $torrent_hash"
+            fi
         done
     else
         log_debug "No removed torrents detected."
     fi
+}
+
+check_removed_torrents() {
+    local prev_response=$1
+    local rid=$(echo "$prev_response" | jq -r '.rid')
+    local sync_response
+    local new_rid
+    local new_response
+
+    # Fetch sync data
+    sync_response=$(fetch_sync_data "$rid")
+
+    # Parse new RID
+    new_rid=$(echo "$sync_response" | jq -r '.rid')
+    if [[ -z "$new_rid" ]]; then
+        log "ERROR: Failed to parse RID from response."
+        return 1
+    fi
+    log_debug "$(date +"%Y-%m-%d %H:%M:%S") Parsed new RID: $new_rid"
+
+    # Remove the .ftag for the removed torrents if applicable
+    process_removed_torrents "$sync_response" "$prev_response"
+
+    # Update response for next iteration
+    new_response=$(fetch_full_torrent_list)
+    new_response=$(update_combined_data "$new_response" "$new_rid")
+
 
     log_debug "Done processing sync data. Next try in $MAX_SLEEP_TIME seconds."
     echo $new_rid
 }
 
+init_response() {
+  if [[ -f "$RID_FILE" ]]; then
+      response=$(cat "$RID_FILE")
+      log_debug "Debug: Read RID from file."
+  else
+      log_debug "Debug: RID file not found, using default RID=0 with full torrent list fetch."
+      response=$(fetch_full_torrent_list)
+      response=$(update_combined_data "$response" "0")
+  fi
+  echo "$response"
+}
 
-# handle_removed_torrent() {
-#     local torrent_hash=$1
-#     log_debug "Handling removed torrent: $torrent_hash"
-
-#     # Find and delete orphan .ftag files and their directories
-#     local ftag_file=$(find /tracked_dir -name "${torrent_hash}.ftag" 2>/dev/null)
-#     if [[ -n "$ftag_file" ]]; then
-#         log "Found orphan .ftag file: $ftag_file. Deleting..."
-#         rm -f "$ftag_file"
-#         local parent_dir=$(dirname "$ftag_file")
-#         if [[ -z "$(ls -A "$parent_dir")" ]]; then
-#             log "Directory $parent_dir is empty. Deleting..."
-#             rmdir "$parent_dir"
-#         fi
-#     else
-#         log "No orphan .ftag file found for torrent hash: $torrent_hash."
-#     fi
-# }
 
 init_checks
 
-rid=0
 
-if [[ -f "$RID_FILE" ]]; then
-    rid=$(cat "$RID_FILE")
-    log_debug "Debug: Read RID from file: $rid"  # Add this line to check the value from the file
-else
-    log_debug "Debug: RID file not found, using default RID=0"
-fi
-
-log_debug "Starting torrent removal tracker with RID=$rid"
+response=$(init_response)
 
 while :; do
-    log_debug "Debug: Calling fetch_sync_data with RID=$rid"  # Debugging the call
-    rid=$(fetch_sync_data $rid)
+    log_debug "Debug: Calling fetch_sync_data with RID=$(echo "$response" | jq -r '.rid')"
+    response=$(check_removed_torrents $reponse)
     sleep "${MAX_SLEEP_TIME}"
 done
