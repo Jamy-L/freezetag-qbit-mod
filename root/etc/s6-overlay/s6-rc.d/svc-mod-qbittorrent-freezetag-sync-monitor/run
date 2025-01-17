@@ -161,27 +161,36 @@ process_removed_torrents() {
     local sync_response=$1
     local combined_data=$2
 
+    # Extract the list of removed torrents
     local torrents_removed=$(echo "$sync_response" | jq -c '.torrents_removed[]?')
     log_debug "Database: $combined_data"
 
     if [[ -n "$torrents_removed" ]]; then
         for torrent_hash in $torrents_removed; do
+            # Strip quotes from the hash
+            torrent_hash=$(echo "$torrent_hash" | tr -d '"')
+
             log_debug "Processing removed torrent: $torrent_hash"
+
+            # Retrieve the torrent data using the hash
             local torrent_data=$(echo "$combined_data" | jq --arg hash "$torrent_hash" '.torrents[$hash]')
+
             log_debug "Torrent data: $torrent_data"
             
-            if [[ -n "$torrent_data" && "$torrent_data" != "null" ]]; then
+            # Check if the torrent exists and is not null
+            if [[ "$torrent_data" != "null" ]]; then
                 local save_path=$(echo "$torrent_data" | jq -r '.save_path')
                 log_debug "Removed torrent: $torrent_hash"
                 log_debug "Save Path: $save_path"
             else
-                log_debug "No matching torrent in the $CATEGORY_DL and $CATEGORY_FZ categories found for hash: $torrent_hash"
+                log_debug "No matching torrent found for hash: $torrent_hash"
             fi
         done
     else
         log_debug "No removed torrents detected."
     fi
 }
+
 
 
 check_removed_torrents() {
