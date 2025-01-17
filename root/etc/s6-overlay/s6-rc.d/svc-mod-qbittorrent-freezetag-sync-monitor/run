@@ -22,11 +22,11 @@ RID_FILE="/tmp/qbittorrent_rid"  # Store the last response ID
 
 # Functions
 log() {
-    echo "[mod-freezetag] ${1} >&2"
+    echo "[mod-freezetag] ${1}" >&2
 }
 log_debug() {
     if [ "${DEBUG,,}" = 'true' ]; then
-        echo "[mod-freezetag] (DEBUG) ${1} >&2"
+        echo "[mod-freezetag] (DEBUG) ${1}" >&2
     fi
 }
 
