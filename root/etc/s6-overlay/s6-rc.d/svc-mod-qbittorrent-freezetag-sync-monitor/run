@@ -28,7 +28,13 @@ RESPONSE_FILE="/config/qbittorrent_rid"  # Store the last response ID, persistan
 
 # Functions
 log() {
-    echo "[mod-freezetag] ${1}" >&2
+    echo "[mod-freezetag] INFO: ${1}" >&2
+}
+log_warning() {
+    echo "[mod-freezetag] WARNING: ${1}" >&2
+}
+log_error() {
+    echo "[mod-freezetag] ERROR: ${1}" >&2
 }
 log_debug() {
     if [ "${DEBUG,,}" = 'true' ]; then
@@ -59,7 +65,7 @@ init_checks(){
     curl ${CURL_OPT} --silent --output /dev/null "${QBITTORRENT}"
     if [ "$?" -eq '60' ]; then
       err='true'
-      log "Warning: Your qBittorrent certificate is untrusted. See HTTPS section in https://github.com/t-anc/GSP-Qbittorent-Gluetun-sync-port-mod#troubleshooting."
+      log_warning "Your qBittorrent certificate is untrusted. See HTTPS section in https://github.com/t-anc/GSP-Qbittorent-Gluetun-sync-port-mod#troubleshooting."
     fi
   fi
 
@@ -68,14 +74,14 @@ init_checks(){
   #   or check for bad credentials.
 
   if [ ! -f "${CONF_FILE}" ]; then
-    log "WARNING: ${CONF_FILE} not found, can't check the The \"Bypass authentication for clients on localhost\" setting. Running in standalone mode."
+    log_warning "${CONF_FILE} not found, can't check the The \"Bypass authentication for clients on localhost\" setting. Running in standalone mode."
   else
     if { [ -z "${QBT_USERNAME}" ] || [ -z "${QBT_PASSWORD}" ] ;} && [ "$(grep 'LocalHostAuth' ${CONF_FILE} | awk -F'=' '{print $2}')" != "false" ]; then
       err='true'
-      log "Warning: The \"Bypass authentication for clients on localhost\" setting is not set."
+      log_error "The \"Bypass authentication for clients on localhost\" setting is not set."
     elif [ -n "${QBT_USERNAME}" ] && [ -n "${QBT_PASSWORD}" ] && [ "$(qbt_login)" != "Ok." ]; then
-        err='true'
-        log "Error: Qbittorrent authentication failed, check the credentials."
+      err='true'
+      log_error "Qbittorrent authentication failed, check the credentials."
     fi
   fi
 
@@ -83,7 +89,7 @@ init_checks(){
   #   Check for "Host header validation".
   if [ "$(curl ${CURL_OPT} --write-out '%{http_code}' --silent --output /dev/null "${QBITTORRENT}")" -eq 401 ]; then
     err='true'
-    log "Error: Qbittorrent returned 401. Is the \"Enable Host header validation\" setting set ? Is $(basename "${QBITTORRENT%:*}") whitelisted ?"
+    log_error "Qbittorrent returned 401. Is the \"Enable Host header validation\" setting set ? Is $(basename "${QBITTORRENT%:*}") whitelisted ?"
   fi
 
 
@@ -91,7 +97,7 @@ init_checks(){
   # In case of failed checks, enter an empty loop : 
   #   -> exiting the script would make s6-overlay to re-run it.
   if [ -n "${err}" ];then
-    log "Error: Init checks failed, exiting the mod. You can disable init checks by setting \"FTAG_SKIP_INIT_CHECKS=true\"."
+    log_error "Init checks failed, exiting the mod. You can disable init checks by setting \"FTAG_SKIP_INIT_CHECKS=true\"."
     while :; do
       sleep 3600
     done
@@ -153,7 +159,7 @@ fetch_sync_data() {
         --url "${QBITTORRENT}/api/v2/sync/maindata?rid=${rid}&nocache=${nocache}" 2>/dev/null)
 
     if [[ $? -ne 0 || -z "$response" ]]; then
-        log "ERROR: Failed to fetch sync data from /sync/maindata."
+        log_error "Failed to fetch sync data from /sync/maindata."
         return 1
     fi
 
@@ -197,7 +203,7 @@ process_removed_torrents() {
                         local ftag_files=$(find "$full_folder_path" -type f -name "*.ftag")
                         if [[ -n "$ftag_files" ]]; then
                             log_debug "Removing .ftag files in $full_folder_path"
-                            rm -f $ftag_files
+                            rm -f "$ftag_files" # Ensure quotes around $ftag_files to handle any spaces
                             # if the folder is now empty, remove it
                             if [[ -z "$(ls -A $full_folder_path)" ]]; then
                                 log_debug "Folder is now empty, removing: $full_folder_path"
@@ -236,7 +242,7 @@ check_removed_torrents() {
     # Parse new RID
     new_rid=$(echo "$sync_response" | jq -r '.rid')
     if [[ -z "$new_rid" ]]; then
-        log "ERROR: Failed to parse RID from response."
+        log_error "Failed to parse RID from response."
         return 1
     fi
 

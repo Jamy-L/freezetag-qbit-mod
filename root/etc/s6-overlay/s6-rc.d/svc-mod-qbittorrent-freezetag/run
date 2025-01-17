@@ -6,22 +6,23 @@ CATEGORY="${FTAG_DL_CATEGORY}"
 CATEGORY_FZ="${FTAG_FZ_CATEGORY:-${CATEGORY}_frozen}"
 
 log() {
-    echo "[mod-freezetag] ${1}" >&2
+    echo "[mod-freezetag] INFO:${1}" >&2
+}
+log_error() {
+    echo "[mod-freezetag] ERROR:${1}" >&2
 }
 log_debug() {
-    if [ "${DEBUG,,}" = 'true' ]; then
+    if [ "${DOCKER_MODS_DEBUG,,}" = 'true' ]; then
         echo "[mod-freezetag] DEBUG: ${1}" >&2
     fi
 }
 
 # Check if DOCKER_MODS_DEBUG is set and true
-if [[ "${DOCKER_MODS_DEBUG}" == "true" ]]; then
-    log_debug "Starting svc-qbittorrent-freezetag..." >&2
-fi
+log_debug "Starting svc-qbittorrent-freezetag..."
 
 # Check if the FROZEN_DIR is empty
 if [ ! -z "$(find ${FROZEN_DIR} -mindepth 1 -print -quit)" ]; then
-    log "Error: The FROZEN_DIR (${FROZEN_DIR}) is not empty."
+    log_error "The FROZEN_DIR (${FROZEN_DIR}) is not empty."
     log "Contents of ${FROZEN_DIR}:"
     ls -l "${FROZEN_DIR}" >&2
     exit 1
@@ -39,14 +40,14 @@ init_checks(){
   # Check that the FROZEN_DIR exists
   if [ ! -d "${FROZEN_DIR}" ]; then
     err='true'
-    log "Error: The FROZEN_DIR (${FROZEN_DIR}) does not exist."
+    log_error "The FROZEN_DIR (${FROZEN_DIR}) does not exist."
   fi
 
   # Check 2 :
   # Check that it is empty
   if [ ! -z "$(find ${FROZEN_DIR} -mindepth 1 -print -quit)" ]; then
     err='true'
-    log "Error: The FROZEN_DIR (${FROZEN_DIR}) is not empty."
+    log_error "The FROZEN_DIR (${FROZEN_DIR}) is not empty."
   fi
 
   ## Check 4 :
@@ -55,20 +56,20 @@ init_checks(){
   if [ -n "$SAVE_PATH" ]; then
     log_debug "Category: $CATEGORY"
   else
-    log "Error: '$CATEGORY' is not a valid category."
+    log_error "'$CATEGORY' is not a valid category."
   fi
 
   ## Check 5
   # Check that the category path exists
   if [ ! -d "$SAVE_PATH" ]; then
-    log "Error: The category path '$SAVE_PATH' does not exist."
+    log_error "The category path '$SAVE_PATH' does not exist."
   fi
 
   # Display Check results.
   # In case of failed checks, enter an empty loop : 
   #   -> exiting the script would make s6-overlay to re-run it.
   if [ -n "${err}" ];then
-    log "Error: Init checks failed, exiting the mod. You can disable init checks by setting \"FTAG_SKIP_INIT_CHECKS=true\"."
+    log_error "Init checks failed, exiting the mod. You can disable init checks by setting \"FTAG_SKIP_INIT_CHECKS=true\"."
     while :; do
       sleep 3600
     done
@@ -84,7 +85,7 @@ if [ ! -d "${FROZEN_DIR}" ]; then
   log_debug "The FROZEN_DIR (${FROZEN_DIR}) does not exist. Creating it..."
   mkdir -p "${FROZEN_DIR}"
   if [ $? -ne 0 ]; then
-    log "Error: Failed to create the FROZEN_DIR (${FROZEN_DIR})."
+    log_error "Failed to create the FROZEN_DIR (${FROZEN_DIR})."
     exit 1
   fi
 
@@ -107,10 +108,10 @@ CAT_display="${CATEGORY}${spaces}"
 CAT_FZ_display="${CATEGORY_FZ}${spaces}"
 CAT_DIR_display="${CATEGORY_DIR}${spaces}"
 FRO_DIR_display="${FROZEN_DIR}${spaces}"
-if [ -z "${CATEGORY_UMASK}" ]; then
+if [ -z "${FTAG_UMASK}" ]; then
     CAT_UMASK_display="unset${spaces}"
 else
-    CAT_UMASK_display="${CATEGORY_UMASK}${spaces}"
+    CAT_UMASK_display="${FTAG_UMASK}${spaces}"
 fi
 echo "\
 +---------------------------------------------------------+
