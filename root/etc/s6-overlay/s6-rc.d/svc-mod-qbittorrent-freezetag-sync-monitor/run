@@ -172,16 +172,42 @@ process_removed_torrents() {
 
             log_debug "Processing removed torrent: $torrent_hash"
 
-            # Retrieve the torrent data using the hash
             local torrent_data=$(echo "$combined_data" | jq --arg hash "$torrent_hash" '.torrents[$hash]')
-
-            log_debug "Torrent data: $torrent_data"
             
             # Check if the torrent exists and is not null
             if [[ "$torrent_data" != "null" ]]; then
-                local save_path=$(echo "$torrent_data" | jq -r '.save_path')
-                log_debug "Removed torrent: $torrent_hash"
-                log_debug "Save Path: $save_path"
+                local content_path=$(echo "$torrent_data" | jq -r '.content_path')
+                log_debug "Content Path: $content_path"
+
+                # Check if the path is a directory
+                if [[ -d "$content_path" ]]; then
+                    # Extract folder name
+                    local folder_name=$(basename "$content_path")
+                    local full_folder_path="$CATEGORY_DL/$folder_name"
+                    
+                    # Check if the folder exists
+                    if [[ -d "$full_folder_path" ]]; then
+                        log_debug "Folder exists: $full_folder_path"
+
+                        # Remove .ftag files if present
+                        local ftag_files=$(find "$full_folder_path" -type f -name "*.ftag")
+                        if [[ -n "$ftag_files" ]]; then
+                            log_debug "Removing .ftag files in $full_folder_path"
+                            rm -f $ftag_files
+                            # if the folder is now empty, remove it
+                            if [[ -z "$(ls -A $full_folder_path)" ]]; then
+                                log_debug "Folder is now empty, removing: $full_folder_path"
+                                rmdir "$full_folder_path"
+                            fi
+                        else
+                            log_debug "No .ftag files found in $full_folder_path"
+                        fi
+                    else
+                        log_debug "Folder does not exist: $full_folder_path"
+                    fi
+                else
+                    log_debug "Content path is not a folder: $content_path"
+                fi
             else
                 log_debug "No matching torrent found for hash: $torrent_hash"
             fi
