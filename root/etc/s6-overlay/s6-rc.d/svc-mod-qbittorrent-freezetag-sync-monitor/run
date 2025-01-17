@@ -100,11 +100,6 @@ update_combined_data() {
     local rid=$2
 
     log_debug "Updating combined data structure with RID: $rid"
-update_combined_data() {
-    local full_list=$1
-    local rid=$2
-
-    log_debug "Updating combined data structure with RID: $rid"
     
     # Construct the JSON structure
     local combined=$(jq -n --argjson torrents "$full_list" --arg rid "$rid" \
@@ -118,12 +113,6 @@ update_combined_data() {
     log_debug "Combined data structure updated and saved: $combined"
     
     # Return the combined JSON
-    echo "$combined"
-}
-
-    
-    echo "$combined" > "$RESPONSE_FILE"
-    log_debug "Combined data structure updated and saved."
     echo "$combined"
 }
 
