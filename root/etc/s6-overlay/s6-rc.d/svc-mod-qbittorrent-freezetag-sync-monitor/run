@@ -146,6 +146,7 @@ fetch_sync_data() {
     fi
 
     log_debug "Done processing sync data. Next try in $MAX_SLEEP_TIME seconds."
+    echo "$new_rid"
 }
 
 
@@ -174,12 +175,16 @@ main() {
     local rid=0
     if [[ -f "$RID_FILE" ]]; then
         rid=$(cat "$RID_FILE")
+        echo "Debug: Read RID from file: $rid"  # Add this line to check the value from the file
+    else
+        echo "Debug: RID file not found, using default RID=0"
     fi
 
     log_debug "Starting torrent removal tracker with RID=$rid"
 
     while :; do
-        fetch_sync_data "$rid"
+        echo "Debug: Calling fetch_sync_data with RID=$rid"  # Debugging the call
+        rid=$(fetch_sync_data "$rid")
         sleep "${MAX_SLEEP_TIME}"
     done
 }
