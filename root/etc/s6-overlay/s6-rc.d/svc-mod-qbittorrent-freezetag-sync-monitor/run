@@ -180,6 +180,7 @@ process_removed_torrents() {
 
 check_removed_torrents() {
     local prev_response=$1
+    log_debug "l 183 : $prev_response"
     local rid=$(echo "$prev_response" | jq -r '.rid')
     local sync_response
     local new_rid
