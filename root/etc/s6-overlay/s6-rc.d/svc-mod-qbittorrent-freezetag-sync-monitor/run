@@ -19,7 +19,7 @@ QBT_COOKIES="--cookie-jar /tmp/cookies.txt --cookie /tmp/cookies.txt"
 CONF_FILE='/config/qBittorrent/qBittorrent.conf'
 CATEGORY="${FTAG_CATEGORY:-}"
 
-RID_FILE="/tmp/qbittorrent_rid"  # Store the last response ID
+RESPONSE_FILE="/tmp/qbittorrent_rid"  # Store the last response ID
 
 # Functions
 log() {
@@ -103,7 +103,7 @@ update_combined_data() {
     local combined=$(jq -n --argjson torrents "$full_list" --arg rid "$rid" \
         '{rid: $rid, torrents: $torrents}')
     
-    echo "$combined" > "$TORRENT_LIST_FILE"
+    echo "$combined" > "$RESPONSE_FILE"
     log_debug "Combined data structure updated and saved."
     echo "$combined"
 }
@@ -201,8 +201,8 @@ check_removed_torrents() {
 }
 
 init_response() {
-  if [[ -f "$RID_FILE" ]]; then
-      response=$(cat "$RID_FILE")
+  if [[ -f "$RESPONSE_FILE" ]]; then
+      response=$(cat "$RESPONSE_FILE")
       log_debug "Debug: Read RID from file."
   else
       log_debug "Debug: RID file not found, using default RID=0 with full torrent list fetch."
