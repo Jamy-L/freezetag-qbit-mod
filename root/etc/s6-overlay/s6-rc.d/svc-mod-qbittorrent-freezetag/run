@@ -57,9 +57,9 @@ inject_autorun_script() {
               # print "Custom command already present in program= line.";
           } else {
               # Append custom command with &&
-              sub(/"$/, " && " custom_cmd "\"");
+              $0 = $0 " && " custom_cmd;
               print $0;
-              # print "Modified program= line to include custom command.";
+              print "Modified program= line to include custom command.";
           }
           next;
       }
@@ -102,7 +102,7 @@ inject_autorun_script() {
   log_debug "New permissions: $(stat -c %a $CONF_FILE)"
   log_debug "New owner: $(stat -c %U:%G $CONF_FILE)"
   log_debug "Reading new $CONF_FILE:"
-  log_debug "$CONF_FILE"
+  log_debug "$(cat $CONF_FILE)"
 
   # Clean up temporary file
   rm -f "$TEMP_FILE"
