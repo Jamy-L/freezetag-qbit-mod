@@ -90,7 +90,11 @@ inject_autorun_script() {
   # Replace the original config file with the modified one
   if $changes_made; then
       log_debug "Injecting autorun script into $CONF_FILE"
+      log_debug "Permissions before: $(ls -l $CONF_FILE)"
+      log_debug "Ownership before: $(ls -n $CONF_FILE)"
       mv "$TEMP_FILE" "$CONF_FILE"
+      log_debug "Permissions after: $(ls -l $CONF_FILE)"
+      log_debug "Ownership after: $(ls -n $CONF_FILE)"
       log_debug "New $CONF_FILE:"
       log_debug "$(cat $CONF_FILE)"
   fi
