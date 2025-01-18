@@ -54,12 +54,10 @@ inject_autorun_script() {
           if ($0 ~ custom_cmd) {
               cmd_present = 1;
               print $0;
-              # print "Custom command already present in program= line.";
           } else {
               # Append custom command with &&
               $0 = $0 " && " custom_cmd;
               print $0;
-              print "Modified program= line to include custom command.";
           }
           next;
       }
@@ -68,7 +66,6 @@ inject_autorun_script() {
           if ($0 != "enabled=true") {
               $0 = "enabled=true";
               print $0;
-              # print "Updated enabled= line to true.";
           } else {
               # print "enabled= line is already set to true.";
               print $0;
@@ -87,21 +84,10 @@ inject_autorun_script() {
       return 1
   fi
 
-  if $changes_made; then
-      log_debug "Changes detected in [AutoRun] section:"
-      diff "$CONF_FILE" "$TEMP_FILE" | sed 's/^/    /'
-  else
-      log_debug "No changes made to [AutoRun] section."
-  fi
-
   # Replace the original config file with the modified one
   log_debug "Injecting autorun script into $CONF_FILE"
-  log_debug "Old permissions: $(stat -c %a $CONF_FILE)"
-  log_debug "Old owner: $(stat -c %U:%G $CONF_FILE)"
   mv "$TEMP_FILE" "$CONF_FILE"
-  log_debug "New permissions: $(stat -c %a $CONF_FILE)"
-  log_debug "New owner: $(stat -c %U:%G $CONF_FILE)"
-  log_debug "Reading new $CONF_FILE:"
+  log_debug "New $CONF_FILE:"
   log_debug "$(cat $CONF_FILE)"
 
   # Clean up temporary file
