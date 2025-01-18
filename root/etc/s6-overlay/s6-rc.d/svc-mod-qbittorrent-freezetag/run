@@ -35,7 +35,7 @@ inject_autorun_script(){
   local TEMP_FILE=$(mktemp)
   local CUSTOM_CMD="/mod-qbittorrent-freezetag-scripts/freeze.sh %L %D"
   local SECTION="[AutoRun]"
-  if grep -q "^\[AutoRun\]" "$CONFIG_FILE"; then
+  if grep -q "^\[AutoRun\]" "$CONF_FILE"; then
       # Modify the [AutoRun] section
       awk -v custom_cmd="$CUSTOM_CMD" '
       BEGIN { in_autorun = 0; cmd_present = 0; }
@@ -56,12 +56,12 @@ inject_autorun_script(){
           # If program= line was not found, add it with the custom command
           if (in_autorun && !cmd_present) print "program=\"" custom_cmd "\"";
       }
-      ' "$CONFIG_FILE" > "$TEMP_FILE"
+      ' "$CONF_FILE" > "$TEMP_FILE"
   else
-      log_error "Couldnt find AutoRun section in $CONFIG_FILE"
+      log_error "Couldnt find AutoRun section in $CONF_FILE"
   fi
   # Replace the original config file with the modified one
-  mv "$TEMP_FILE" "$CONFIG_FILE"
+  mv "$TEMP_FILE" "$CONF_FILE"
 
   # Clean up temporary file
   rm -f "$TEMP_FILE"
