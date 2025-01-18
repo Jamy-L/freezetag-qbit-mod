@@ -21,14 +21,6 @@ log_debug() {
 # Check if DOCKER_MODS_DEBUG is set and true
 log_debug "Starting svc-qbittorrent-freezetag..."
 
-# Check if the FROZEN_DIR is empty
-if [ ! -z "$(find ${FROZEN_DIR} -mindepth 1 -print -quit)" ]; then
-    log_error "The FROZEN_DIR (${FROZEN_DIR}) is not empty."
-    log "Contents of ${FROZEN_DIR}:"
-    ls -l "${FROZEN_DIR}" >&2
-    exit 1
-fi
-
 
 inject_autorun_script() {
   # This injects the script that will run on torrent completion.
@@ -162,7 +154,7 @@ init_checks(){
 
 ## 
 
-# Create the freeze folder if it doesn't exist
+# Create the frozen folder if it doesn't exist
 if [ ! -d "${FROZEN_DIR}" ]; then
   log_debug "The FROZEN_DIR (${FROZEN_DIR}) does not exist. Creating it..."
   mkdir -p "${FROZEN_DIR}"
@@ -176,6 +168,13 @@ if [ ! -d "${FROZEN_DIR}" ]; then
     lsiown -R abc:abc \
       /$FROZEN_DIR
     log_debug "Setting owner of FROZEN_DIR (${FROZEN_DIR}) to abc:abc"
+  fi
+elif [ ! -z "$(find ${FROZEN_DIR} -mindepth 1 -print -quit)" ]; then
+  # Check if the FROZEN_DIR is empty
+    log_error "The FROZEN_DIR (${FROZEN_DIR}) is not empty."
+    log "Contents of ${FROZEN_DIR}:"
+    ls -l "${FROZEN_DIR}" >&2
+    exit 1
   fi
 fi
 
