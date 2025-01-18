@@ -36,12 +36,12 @@ inject_autorun_script() {
   touch "$TEMP_FILE"
   local CUSTOM_CMD="/mod-qbittorrent-freezetag-scripts/freeze.sh %L %D"
   local changes_made=false
-  local DEBUG_LOG_FILE="/tmp/qBittorrent.conf.debug.log"
+  local DEBUG_LOG_FILE="/var/log/qbittorrent_autorun.log" # Adjust the log path as needed
 
   if grep -q "^\[AutoRun\]" "$CONF_FILE"; then
-      log_debug "Found [AutoRun] section in $CONF_FILE"
+      echo "[mod-freezetag] DEBUG: Found [AutoRun] section in $CONF_FILE" >> "$DEBUG_LOG_FILE"
       # Modify the [AutoRun] section
-      awk -v custom_cmd="$CUSTOM_CMD" -v log_debug="$DEBUG_LOG_FILE" '
+      awk -v custom_cmd="$CUSTOM_CMD" '
       BEGIN { 
           in_autorun = 0; 
           cmd_present = 0; 
@@ -52,21 +52,25 @@ inject_autorun_script() {
           next; 
       }
       in_autorun && /^program=/ {
-          # Extract the existing program command and remove quotes
-          match($0, /^program="?(.*)"?$/, arr);
+          # Remove any extra spaces and extract the program command, allowing for both quoted and unquoted commands
+          match($0, /^program\s*=\s*"?([^"]*)"?\s*$/, arr);
           existing_cmd = arr[1];
-          print "Detected existing command: \"" existing_cmd "\" in AutoRun section" >> log_debug;
+          
+          # Debug: Log the detected existing command
+          print "[mod-freezetag] DEBUG: Detected existing command: \"" existing_cmd "\" in AutoRun section" >> "/dev/stderr";
 
           # Check if the custom command is already present
           if (existing_cmd ~ custom_cmd) {
               cmd_present = 1;
               print $0;
-              print "Custom command already present: \"" custom_cmd "\". No changes made to this line." >> log_debug;
+              # Debug: Log that the custom command is already present
+              print "[mod-freezetag] DEBUG: Custom command already present: \"" custom_cmd "\". No changes made to this line." >> "/dev/stderr";
           } else {
               # Construct the new program command securely
               final_cmd = "\"" existing_cmd " && " custom_cmd "\"";
               print "program=" final_cmd;
-              print "Appending custom command. New program line: program=" final_cmd >> log_debug;
+              # Debug: Log the new program line
+              print "[mod-freezetag] DEBUG: Appending custom command. New program line: program=" final_cmd >> "/dev/stderr";
           }
           next;
       }
@@ -75,10 +79,12 @@ inject_autorun_script() {
           if ($0 != "enabled=true") {
               $0 = "enabled=true";
               print $0;
-              print "Enabled set to true." >> log_debug;
+              # Debug: Log that enabled was set to true
+              print "[mod-freezetag] DEBUG: Enabled set to true." >> "/dev/stderr";
           } else {
               print $0;
-              print "Enabled was already true." >> log_debug;
+              # Debug: Log that enabled was already true
+              print "[mod-freezetag] DEBUG: Enabled was already true." >> "/dev/stderr";
           }
           next;
       }
@@ -90,26 +96,27 @@ inject_autorun_script() {
 
       changes_made=true
   else
-      log_error "Could not find [AutoRun] section in $CONF_FILE"
+      echo "[mod-freezetag] ERROR: Could not find [AutoRun] section in $CONF_FILE" >> "$DEBUG_LOG_FILE"
       return 1
   fi
 
   # Replace the original config file with the modified one
   if $changes_made; then
-      log_debug "Injecting autorun script into $CONF_FILE"
+      echo "[mod-freezetag] DEBUG: Injecting autorun script into $CONF_FILE" >> "$DEBUG_LOG_FILE"
       mv "$TEMP_FILE" "$CONF_FILE"
       if [[ -z ${LSIO_NON_ROOT_USER} ]]; then
         # chown download directory if currently not set to abc
-        lsiown -R abc:abc "$CONF_FILE"
-        log_debug "Setting owner of CONF_FILE (${CONF_FILE}) to abc:abc"
+        chown -R abc:abc "$CONF_FILE"
+        echo "[mod-freezetag] DEBUG: Setting owner of CONF_FILE (${CONF_FILE}) to abc:abc" >> "$DEBUG_LOG_FILE"
       fi
-      log_debug "New $CONF_FILE:"
-      log_debug "$(cat "$CONF_FILE")"
+      echo "[mod-freezetag] DEBUG: New $CONF_FILE:" >> "$DEBUG_LOG_FILE"
+      cat "$CONF_FILE" >> "$DEBUG_LOG_FILE"
   fi
 
   # Clean up temporary file
   rm -f "$TEMP_FILE"
 }
+
 
 
 init_checks(){
