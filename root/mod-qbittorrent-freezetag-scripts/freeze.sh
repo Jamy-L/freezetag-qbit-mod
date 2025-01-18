@@ -68,7 +68,7 @@ if [[ "$category" == "$CATEGORY" ]]; then
 
 
     # Set the umask for the category if specified
-    if [[ -n "$CUMASK" ]]; then
+    if [[ -n "$UMASK" ]]; then
         debug_log "Setting umask $UMASK for path: $torrent_path."
 
         # Recursively find files and apply the set_permissions function
