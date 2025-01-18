@@ -36,7 +36,7 @@ inject_autorun_script() {
   touch "$TEMP_FILE"
   local CUSTOM_CMD="/mod-qbittorrent-freezetag-scripts/freeze.sh %L %D"
   local changes_made=false
-  local log_debug="/tmp/qBittorrent.conf.debug.log"
+  local DEBUG_LOG_FILE="/tmp/qBittorrent.conf.debug.log"
 
   if grep -q "^\[AutoRun\]" "$CONF_FILE"; then
       log_debug "Found [AutoRun] section in $CONF_FILE"
