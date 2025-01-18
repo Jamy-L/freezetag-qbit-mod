@@ -36,7 +36,7 @@ inject_autorun_script() {
   touch "$TEMP_FILE"
   local CUSTOM_CMD="/mod-qbittorrent-freezetag-scripts/freeze.sh %L %D"
   local changes_made=false
-  local DEBUG_LOG_FILE="/var/log/qbittorrent_autorun.log" # Adjust the log path as needed
+  local DEBUG_LOG_FILE="/var/log/qbittorrent_autorun.log"
 
   if grep -q "^\[AutoRun\]" "$CONF_FILE"; then
       echo "[mod-freezetag] DEBUG: Found [AutoRun] section in $CONF_FILE" >> "$DEBUG_LOG_FILE"
@@ -52,9 +52,15 @@ inject_autorun_script() {
           next; 
       }
       in_autorun && /^program=/ {
-          # Remove any extra spaces and extract the program command, allowing for both quoted and unquoted commands
-          match($0, /^program\s*=\s*"?([^"]*)"?\s*$/, arr);
-          existing_cmd = arr[1];
+          # Get everything after program=, trimming leading/trailing whitespace
+          cmd_line = substr($0, index($0, "=") + 1);
+          gsub(/^[ \t]+|[ \t]+$/, "", cmd_line);
+          
+          # Remove surrounding quotes if they exist
+          existing_cmd = cmd_line;
+          if (substr(existing_cmd, 1, 1) == "\"" && substr(existing_cmd, length(existing_cmd), 1) == "\"") {
+              existing_cmd = substr(existing_cmd, 2, length(existing_cmd) - 2);
+          }
           
           # Debug: Log the detected existing command
           print "[mod-freezetag] DEBUG: Detected existing command: \"" existing_cmd "\" in AutoRun section" >> "/dev/stderr";
@@ -63,39 +69,34 @@ inject_autorun_script() {
           if (existing_cmd ~ custom_cmd) {
               cmd_present = 1;
               print $0;
-              # Debug: Log that the custom command is already present
               print "[mod-freezetag] DEBUG: Custom command already present: \"" custom_cmd "\". No changes made to this line." >> "/dev/stderr";
           } else {
-              # Construct the new program command securely
+              # Always wrap the final command in quotes to handle spaces properly
               final_cmd = "\"" existing_cmd " && " custom_cmd "\"";
               print "program=" final_cmd;
-              # Debug: Log the new program line
               print "[mod-freezetag] DEBUG: Appending custom command. New program line: program=" final_cmd >> "/dev/stderr";
           }
           next;
       }
       in_autorun && /^enabled=/ {
-          # Ensure enabled is true
           if ($0 != "enabled=true") {
               $0 = "enabled=true";
               print $0;
-              # Debug: Log that enabled was set to true
               print "[mod-freezetag] DEBUG: Enabled set to true." >> "/dev/stderr";
           } else {
               print $0;
-              # Debug: Log that enabled was already true
               print "[mod-freezetag] DEBUG: Enabled was already true." >> "/dev/stderr";
           }
           next;
       }
       in_autorun && /^[^[]/ { 
           in_autorun = 0; 
-      } # End of [AutoRun] section
+      }
       { print }
       ' "$CONF_FILE" > "$TEMP_FILE"
 
       changes_made=true
-  else
+  else  
       echo "[mod-freezetag] ERROR: Could not find [AutoRun] section in $CONF_FILE" >> "$DEBUG_LOG_FILE"
       return 1
   fi
@@ -105,7 +106,6 @@ inject_autorun_script() {
       echo "[mod-freezetag] DEBUG: Injecting autorun script into $CONF_FILE" >> "$DEBUG_LOG_FILE"
       mv "$TEMP_FILE" "$CONF_FILE"
       if [[ -z ${LSIO_NON_ROOT_USER} ]]; then
-        # chown download directory if currently not set to abc
         chown -R abc:abc "$CONF_FILE"
         echo "[mod-freezetag] DEBUG: Setting owner of CONF_FILE (${CONF_FILE}) to abc:abc" >> "$DEBUG_LOG_FILE"
       fi
