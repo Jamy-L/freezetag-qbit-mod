@@ -54,12 +54,12 @@ inject_autorun_script() {
           if ($0 ~ custom_cmd) {
               cmd_present = 1;
               print $0;
-              print "Custom command already present in program= line.";
+              # print "Custom command already present in program= line.";
           } else {
               # Append custom command with &&
-              sub(/"$/, " && " custom_cmd "\"");
+              sub(/"$/, " && " CUSTOM_CMD "\"");
               print $0;
-              print "Modified program= line to include custom command.";
+              # print "Modified program= line to include custom command.";
           }
           next;
       }
@@ -68,9 +68,10 @@ inject_autorun_script() {
           if ($0 != "enabled=true") {
               $0 = "enabled=true";
               print $0;
-              print "Updated enabled= line to true.";
+              # print "Updated enabled= line to true.";
           } else {
-              print "enabled= line is already set to true.";
+              # print "enabled= line is already set to true.";
+              print $0;
           }
           next;
       }
