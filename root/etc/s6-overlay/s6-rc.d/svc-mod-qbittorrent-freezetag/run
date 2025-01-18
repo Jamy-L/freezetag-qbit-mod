@@ -61,6 +61,12 @@ inject_autorun_script(){
       log_error "Couldnt find AutoRun section in $CONF_FILE"
   fi
   # Replace the original config file with the modified one
+  log_debug "Injecting autorun script in $CONF_FILE"
+  log_debug "New config file: $(cat $TEMP_FILE)"
+  log_debug "Old permissions: $(stat -c %a $CONF_FILE)"
+  log_debug "Old owner: $(stat -c %U:%G $CONF_FILE)"
+  log_debug "New permissions: $(stat -c %a $TEMP_FILE)"
+  log_debug "New owner: $(stat -c %U:%G $TEMP_FILE)"
   mv "$TEMP_FILE" "$CONF_FILE"
 
   # Clean up temporary file
