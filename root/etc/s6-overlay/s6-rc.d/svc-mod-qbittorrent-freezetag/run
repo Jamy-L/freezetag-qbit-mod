@@ -30,44 +30,82 @@ if [ ! -z "$(find ${FROZEN_DIR} -mindepth 1 -print -quit)" ]; then
 fi
 
 
-inject_autorun_script(){
+inject_autorun_script() {
   # This injects the script that will run on torrent completion.
   local TEMP_FILE=$(mktemp)
   local CUSTOM_CMD="/mod-qbittorrent-freezetag-scripts/freeze.sh %L %D"
   local SECTION="[AutoRun]"
+  local changes_made=false
+
   if grep -q "^\[AutoRun\]" "$CONF_FILE"; then
+      log_debug "Found [AutoRun] section in $CONF_FILE"
       # Modify the [AutoRun] section
       awk -v custom_cmd="$CUSTOM_CMD" '
-      BEGIN { in_autorun = 0; cmd_present = 0; }
-      /^\[AutoRun\]/ { in_autorun = 1; }
+      BEGIN { 
+          in_autorun = 0; 
+          cmd_present = 0; 
+      }
+      /^\[AutoRun\]/ { 
+          in_autorun = 1; 
+          print; 
+          next; 
+      }
       in_autorun && /^program=/ {
           # Check if the custom command is already present
-          if ($0 ~ custom_cmd) cmd_present = 1;
-          # Add the custom command with &&
-          if (!cmd_present) $0 = $0 " && " custom_cmd;
+          if ($0 ~ custom_cmd) {
+              cmd_present = 1;
+              print "Custom command already present in program= line.";
+          } else {
+              $0 = $0 " && " custom_cmd;
+              print $0;
+              print "Modified program= line to include custom command.";
+          }
+          next;
       }
       in_autorun && /^enabled=/ {
           # Ensure enabled is true
-          $0 = "enabled=true";
+          if ($0 != "enabled=true") {
+              $0 = "enabled=true";
+              print $0;
+              print "Updated enabled= line to true.";
+          } else {
+              print "enabled= line is already set to true.";
+          }
+          next;
       }
-      in_autorun && /^[^[]/ { in_autorun = 0; } # End of [AutoRun] section
+      in_autorun && /^[^[]/ { 
+          in_autorun = 0; 
+      } # End of [AutoRun] section
       { print }
       END {
           # If program= line was not found, add it with the custom command
-          if (in_autorun && !cmd_present) print "program=\"" custom_cmd "\"";
+          if (in_autorun && !cmd_present) {
+              print "program=\"" custom_cmd "\"";
+              print "Added new program= line with custom command.";
+          }
       }
       ' "$CONF_FILE" > "$TEMP_FILE"
+
+      changes_made=true
   else
-      log_error "Couldnt find AutoRun section in $CONF_FILE"
+      log_error "Could not find [AutoRun] section in $CONF_FILE"
+      return 1
   fi
+
+  if $changes_made; then
+      log_debug "Changes detected in [AutoRun] section:"
+      diff "$CONF_FILE" "$TEMP_FILE" | sed 's/^/    /'
+  else
+      log_debug "No changes made to [AutoRun] section."
+  fi
+
   # Replace the original config file with the modified one
-  log_debug "Injecting autorun script in $CONF_FILE"
-  log_debug "New config file: $(cat $TEMP_FILE)"
+  log_debug "Injecting autorun script into $CONF_FILE"
   log_debug "Old permissions: $(stat -c %a $CONF_FILE)"
   log_debug "Old owner: $(stat -c %U:%G $CONF_FILE)"
-  log_debug "New permissions: $(stat -c %a $TEMP_FILE)"
-  log_debug "New owner: $(stat -c %U:%G $TEMP_FILE)"
   mv "$TEMP_FILE" "$CONF_FILE"
+  log_debug "New permissions: $(stat -c %a $CONF_FILE)"
+  log_debug "New owner: $(stat -c %U:%G $CONF_FILE)"
 
   # Clean up temporary file
   rm -f "$TEMP_FILE"
