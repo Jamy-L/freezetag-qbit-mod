@@ -50,6 +50,13 @@ init_checks(){
     log_error "The FROZEN_DIR (${FROZEN_DIR}) is not empty."
   fi
 
+  ## Check 3 :
+  # Check that categories.json exists
+  if [ ! -d "${CATEG_FILE}" ]; then
+    err='true'
+    log_error "The categories.json (${CATEG_FILE}) does not exist."
+  fi
+
   ## Check 4 :
   # Check that the required category exists
   SAVE_PATH=$(jq -r --arg category "$CATEGORY" '.[$category].save_path // empty' "$CATEG_FILE")

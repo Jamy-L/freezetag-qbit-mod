@@ -17,9 +17,9 @@ QBT_PASSWORD="${FTAG_QBT_PASSWORD}"
 QBT_COOKIES="--cookie-jar /tmp/cookies.txt --cookie /tmp/cookies.txt"
 [ "${FTAG_CERT_CHECK,,}" = 'false' ] && CURL_OPT='--insecure'
 CONF_FILE='/config/qBittorrent/qBittorrent.conf'
+CATEG_FILE="/config/qBittorrent/categories.json"
 CATEGORY_DL="${FTAG_DL_CATEGORY:-}"
 CATEGORY_FZ="${FTAG_FZ_CATEGORY:-${CATEGORY_DL}_frozen}"
-CATEG_FILE="/config/qBittorrent/categories.json"
 
 # Get Category path
 CATEGORY_DL_DIR=$(jq -r --arg category "$CATEGORY_DL" '.[$category].save_path' "$CATEG_FILE")
