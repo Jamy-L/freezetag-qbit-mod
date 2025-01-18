@@ -93,6 +93,12 @@ inject_autorun_script() {
       log_debug "Permissions before: $(ls -l $CONF_FILE)"
       log_debug "Ownership before: $(ls -n $CONF_FILE)"
       mv "$TEMP_FILE" "$CONF_FILE"
+      if [[ -z ${LSIO_NON_ROOT_USER} ]]; then
+        # chown download directory if currently not set to abc
+        lsiown -R abc:abc \
+        /$FROZEN_DIR
+        log_debug "Setting owner of CONF_FILE (${CONF_FILE}) to abc:abc"
+      fi
       log_debug "Permissions after: $(ls -l $CONF_FILE)"
       log_debug "Ownership after: $(ls -n $CONF_FILE)"
       log_debug "New $CONF_FILE:"
