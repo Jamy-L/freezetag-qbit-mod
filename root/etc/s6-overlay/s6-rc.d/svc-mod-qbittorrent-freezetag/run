@@ -32,7 +32,8 @@ fi
 
 inject_autorun_script() {
   # This injects the script that will run on torrent completion.
-  local TEMP_FILE=$(mktemp)
+  local TEMP_FILE="/tmp/qBittorrent.conf.tmp"
+  touch "$TEMP_FILE"
   local CUSTOM_CMD="/mod-qbittorrent-freezetag-scripts/freeze.sh %L %D"
   local changes_made=false
 
