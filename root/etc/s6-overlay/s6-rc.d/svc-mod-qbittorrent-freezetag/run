@@ -36,10 +36,8 @@ inject_autorun_script() {
   touch "$TEMP_FILE"
   local CUSTOM_CMD="/mod-qbittorrent-freezetag-scripts/freeze.sh %L %D"
   local changes_made=false
-  local DEBUG_LOG_FILE="/var/log/qbittorrent_autorun.log"
 
   if grep -q "^\[AutoRun\]" "$CONF_FILE"; then
-      echo "[mod-freezetag] DEBUG: Found [AutoRun] section in $CONF_FILE" >> "$DEBUG_LOG_FILE"
       # Modify the [AutoRun] section
       awk -v custom_cmd="$CUSTOM_CMD" '
       BEGIN { 
@@ -62,19 +60,14 @@ inject_autorun_script() {
               existing_cmd = substr(existing_cmd, 2, length(existing_cmd) - 2);
           }
           
-          # Debug: Log the detected existing command
-          print "[mod-freezetag] DEBUG: Detected existing command: \"" existing_cmd "\" in AutoRun section" >> "/dev/stderr";
-
           # Check if the custom command is already present
           if (existing_cmd ~ custom_cmd) {
               cmd_present = 1;
               print $0;
-              print "[mod-freezetag] DEBUG: Custom command already present: \"" custom_cmd "\". No changes made to this line." >> "/dev/stderr";
           } else {
               # Always wrap the final command in quotes to handle spaces properly
               final_cmd = "\"" existing_cmd " && " custom_cmd "\"";
               print "program=" final_cmd;
-              print "[mod-freezetag] DEBUG: Appending custom command. New program line: program=" final_cmd >> "/dev/stderr";
           }
           next;
       }
@@ -82,10 +75,8 @@ inject_autorun_script() {
           if ($0 != "enabled=true") {
               $0 = "enabled=true";
               print $0;
-              print "[mod-freezetag] DEBUG: Enabled set to true." >> "/dev/stderr";
           } else {
               print $0;
-              print "[mod-freezetag] DEBUG: Enabled was already true." >> "/dev/stderr";
           }
           next;
       }
@@ -97,20 +88,20 @@ inject_autorun_script() {
 
       changes_made=true
   else  
-      echo "[mod-freezetag] ERROR: Could not find [AutoRun] section in $CONF_FILE" >> "$DEBUG_LOG_FILE"
+      log_error "Could not find [AutoRun] section in $CONF_FILE"
       return 1
   fi
 
   # Replace the original config file with the modified one
   if $changes_made; then
-      echo "[mod-freezetag] DEBUG: Injecting autorun script into $CONF_FILE" >> "$DEBUG_LOG_FILE"
+      log_debug "Injecting autorun script into $CONF_FILE"
       mv "$TEMP_FILE" "$CONF_FILE"
       if [[ -z ${LSIO_NON_ROOT_USER} ]]; then
         chown -R abc:abc "$CONF_FILE"
-        echo "[mod-freezetag] DEBUG: Setting owner of CONF_FILE (${CONF_FILE}) to abc:abc" >> "$DEBUG_LOG_FILE"
+        log_debug "Setting owner of CONF_FILE (${CONF_FILE}) to abc:abc"
       fi
-      echo "[mod-freezetag] DEBUG: New $CONF_FILE:" >> "$DEBUG_LOG_FILE"
-      cat "$CONF_FILE" >> "$DEBUG_LOG_FILE"
+      log_debug "New $CONF_FILE:"
+      log_debug "$(cat "$CONF_FILE")"
   fi
 
   # Clean up temporary file
