@@ -50,14 +50,18 @@ inject_autorun_script() {
           next; 
       }
       in_autorun && /^program=/ {
+          # Extract the existing program command and remove quotes
+          match($0, /^program="?(.*)"?$/, arr);
+          existing_cmd = arr[1];
+
           # Check if the custom command is already present
-          if ($0 ~ custom_cmd) {
+          if (existing_cmd ~ custom_cmd) {
               cmd_present = 1;
               print $0;
           } else {
-              # Append custom command with &&
-              $0 = $0 " && " custom_cmd;
-              print $0;
+              # Construct the new program command securely
+              final_cmd = "\"" existing_cmd " && " custom_cmd "\"";
+              print "program=" final_cmd;
           }
           next;
       }
@@ -67,7 +71,6 @@ inject_autorun_script() {
               $0 = "enabled=true";
               print $0;
           } else {
-              # print "enabled= line is already set to true.";
               print $0;
           }
           next;
@@ -85,14 +88,17 @@ inject_autorun_script() {
   fi
 
   # Replace the original config file with the modified one
-  log_debug "Injecting autorun script into $CONF_FILE"
-  mv "$TEMP_FILE" "$CONF_FILE"
-  log_debug "New $CONF_FILE:"
-  log_debug "$(cat $CONF_FILE)"
+  if $changes_made; then
+      log_debug "Injecting autorun script into $CONF_FILE"
+      mv "$TEMP_FILE" "$CONF_FILE"
+      log_debug "New $CONF_FILE:"
+      log_debug "$(cat $CONF_FILE)"
+  fi
 
   # Clean up temporary file
   rm -f "$TEMP_FILE"
 }
+
 
 init_checks(){
   # Enable or not init_checks
