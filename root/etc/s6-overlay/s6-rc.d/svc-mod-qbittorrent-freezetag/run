@@ -40,7 +40,7 @@ inject_autorun_script() {
   if grep -q "^\[AutoRun\]" "$CONF_FILE"; then
       log_debug "Found [AutoRun] section in $CONF_FILE"
       # Modify the [AutoRun] section
-      awk -v custom_cmd="$CUSTOM_CMD" '
+      awk -v custom_cmd="$CUSTOM_CMD" -v log_debug="$DEBUG_LOG_FILE" '
       BEGIN { 
           in_autorun = 0; 
           cmd_present = 0; 
@@ -54,16 +54,18 @@ inject_autorun_script() {
           # Extract the existing program command and remove quotes
           match($0, /^program="?(.*)"?$/, arr);
           existing_cmd = arr[1];
-          echo "existing_cmd: $existing_cmd"
+          print "Detected existing command: \"" existing_cmd "\" in AutoRun section" >> log_debug;
 
           # Check if the custom command is already present
           if (existing_cmd ~ custom_cmd) {
               cmd_present = 1;
               print $0;
+              print "Custom command already present: \"" custom_cmd "\". No changes made to this line." >> log_debug;
           } else {
               # Construct the new program command securely
               final_cmd = "\"" existing_cmd " && " custom_cmd "\"";
               print "program=" final_cmd;
+              print "Appending custom command. New program line: program=" final_cmd >> log_debug;
           }
           next;
       }
@@ -72,8 +74,10 @@ inject_autorun_script() {
           if ($0 != "enabled=true") {
               $0 = "enabled=true";
               print $0;
+              print "Enabled set to true." >> log_debug;
           } else {
               print $0;
+              print "Enabled was already true." >> log_debug;
           }
           next;
       }
@@ -95,11 +99,11 @@ inject_autorun_script() {
       mv "$TEMP_FILE" "$CONF_FILE"
       if [[ -z ${LSIO_NON_ROOT_USER} ]]; then
         # chown download directory if currently not set to abc
-        lsiown -R abc:abc $CONF_FILE
+        lsiown -R abc:abc "$CONF_FILE"
         log_debug "Setting owner of CONF_FILE (${CONF_FILE}) to abc:abc"
       fi
       log_debug "New $CONF_FILE:"
-      log_debug "$(cat $CONF_FILE)"
+      log_debug "$(cat "$CONF_FILE")"
   fi
 
   # Clean up temporary file
