@@ -36,6 +36,7 @@ inject_autorun_script() {
   touch "$TEMP_FILE"
   local CUSTOM_CMD="/mod-qbittorrent-freezetag-scripts/freeze.sh %L %D"
   local changes_made=false
+  local DEBUG_LOG_FILE="/var/log/qbittorrent_autorun.log"
 
   if grep -q "^\[AutoRun\]" "$CONF_FILE"; then
       # Modify the [AutoRun] section
@@ -51,23 +52,16 @@ inject_autorun_script() {
       }
       in_autorun && /^program=/ {
           # Get everything after program=, trimming leading/trailing whitespace
-          cmd_line = substr($0, index($0, "=") + 1);
-          gsub(/^[ \t]+|[ \t]+$/, "", cmd_line);
-          
-          # Remove surrounding quotes if they exist
-          existing_cmd = cmd_line;
-          if (substr(existing_cmd, 1, 1) == "\"" && substr(existing_cmd, length(existing_cmd), 1) == "\"") {
-              existing_cmd = substr(existing_cmd, 2, length(existing_cmd) - 2);
-          }
+          existing_cmd = substr($0, index($0, "=") + 1);
+          gsub(/^[ \t]+|[ \t]+$/, "", existing_cmd);
           
           # Check if the custom command is already present
           if (existing_cmd ~ custom_cmd) {
               cmd_present = 1;
               print $0;
           } else {
-              # Always wrap the final command in quotes to handle spaces properly
-              final_cmd = "\"" existing_cmd " && " custom_cmd "\"";
-              print "program=" final_cmd;
+              # Simply concatenate the commands with &&
+              print "program=" existing_cmd " && " custom_cmd;
           }
           next;
       }
