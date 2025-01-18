@@ -5,6 +5,10 @@ log() {
     echo "[Freezetag] INFO: $1" >&2
 }
 
+log_error() {
+    echo "[Freezetag] ERROR: $1" >&2
+}
+
 # Function for debug logging
 debug_log() {
     if [[ "$DOCKER_MODS_DEBUG" == "true" ]]; then
@@ -20,7 +24,7 @@ UMASK="${FTAG_UMASK:-}"
 
 # Main script logic
 if [[ $# -ne 2 ]]; then
-    log "ERROR: Invalid usage. Expected <torrent_category> and <torrent_path>."
+    log_error "Invalid usage. Expected <torrent_category> and <torrent_path>."
     log "Usage: $0 <torrent_category> <torrent_path>"
     exit 1
 fi
