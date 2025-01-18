@@ -54,6 +54,7 @@ inject_autorun_script() {
           # Extract the existing program command and remove quotes
           match($0, /^program="?(.*)"?$/, arr);
           existing_cmd = arr[1];
+          echo "existing_cmd: $existing_cmd"
 
           # Check if the custom command is already present
           if (existing_cmd ~ custom_cmd) {
@@ -91,16 +92,12 @@ inject_autorun_script() {
   # Replace the original config file with the modified one
   if $changes_made; then
       log_debug "Injecting autorun script into $CONF_FILE"
-      log_debug "Permissions before: $(ls -l $CONF_FILE)"
-      log_debug "Ownership before: $(ls -n $CONF_FILE)"
       mv "$TEMP_FILE" "$CONF_FILE"
       if [[ -z ${LSIO_NON_ROOT_USER} ]]; then
         # chown download directory if currently not set to abc
         lsiown -R abc:abc $CONF_FILE
         log_debug "Setting owner of CONF_FILE (${CONF_FILE}) to abc:abc"
       fi
-      log_debug "Permissions after: $(ls -l $CONF_FILE)"
-      log_debug "Ownership after: $(ls -n $CONF_FILE)"
       log_debug "New $CONF_FILE:"
       log_debug "$(cat $CONF_FILE)"
   fi
