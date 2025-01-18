@@ -51,10 +51,10 @@ init_checks(){
   fi
 
   ## Check 3 :
-  # Check that categories.json exists
-  if [ ! -d "${CATEG_FILE}" ]; then
+  # Check that the categories.json file exists
+  if [ ! -f "${CATEG_FILE}" ]; then
     err='true'
-    log_error "The categories.json (${CATEG_FILE}) does not exist."
+    log_error "categories.json (${CATEG_FILE}) does not exist."
   fi
 
   ## Check 4 :
