@@ -34,7 +34,6 @@ inject_autorun_script() {
   # This injects the script that will run on torrent completion.
   local TEMP_FILE=$(mktemp)
   local CUSTOM_CMD="/mod-qbittorrent-freezetag-scripts/freeze.sh %L %D"
-  local SECTION="[AutoRun]"
   local changes_made=false
 
   if grep -q "^\[AutoRun\]" "$CONF_FILE"; then
@@ -54,9 +53,11 @@ inject_autorun_script() {
           # Check if the custom command is already present
           if ($0 ~ custom_cmd) {
               cmd_present = 1;
+              print $0;
               print "Custom command already present in program= line.";
           } else {
-              $0 = $0 " && " custom_cmd;
+              # Append custom command with &&
+              sub(/"$/, " && " custom_cmd "\"");
               print $0;
               print "Modified program= line to include custom command.";
           }
@@ -77,13 +78,6 @@ inject_autorun_script() {
           in_autorun = 0; 
       } # End of [AutoRun] section
       { print }
-      END {
-          # If program= line was not found, add it with the custom command
-          if (in_autorun && !cmd_present) {
-              print "program=\"" custom_cmd "\"";
-              print "Added new program= line with custom command.";
-          }
-      }
       ' "$CONF_FILE" > "$TEMP_FILE"
 
       changes_made=true
