@@ -172,10 +172,9 @@ if [ ! -d "${FROZEN_DIR}" ]; then
 elif [ ! -z "$(find ${FROZEN_DIR} -mindepth 1 -print -quit)" ]; then
   # Check if the FROZEN_DIR is empty
     log_error "The FROZEN_DIR (${FROZEN_DIR}) is not empty."
-    log "Contents of ${FROZEN_DIR}:"
-    ls -l "${FROZEN_DIR}" >&2
+    log_error "Contents of ${FROZEN_DIR}:"
+    log_error "$(ls -la ${FROZEN_DIR})"
     exit 1
-  fi
 fi
 
 init_checks
