@@ -1,6 +1,7 @@
 #!/usr/bin/with-contenv bash
 
 FROZEN_DIR="${FTAG_DIR:-/frozen}"
+CONF_FILE='/config/qBittorrent/qBittorrent.conf'
 CATEG_FILE="/config/qBittorrent/categories.json"
 CATEGORY="${FTAG_DL_CATEGORY}"
 CATEGORY_FZ="${FTAG_FZ_CATEGORY:-${CATEGORY}_frozen}"
@@ -28,6 +29,43 @@ if [ ! -z "$(find ${FROZEN_DIR} -mindepth 1 -print -quit)" ]; then
     exit 1
 fi
 
+
+inject_autorun_script(){
+  # This injects the script that will run on torrent completion.
+  local TEMP_FILE=$(mktemp)
+  local CUSTOM_CMD="/mod-qbittorrent-freezetag-scripts/freeze.sh %L %D"
+  local SECTION="[AutoRun]"
+  if grep -q "^\[AutoRun\]" "$CONFIG_FILE"; then
+      # Modify the [AutoRun] section
+      awk -v custom_cmd="$CUSTOM_CMD" '
+      BEGIN { in_autorun = 0; cmd_present = 0; }
+      /^\[AutoRun\]/ { in_autorun = 1; }
+      in_autorun && /^program=/ {
+          # Check if the custom command is already present
+          if ($0 ~ custom_cmd) cmd_present = 1;
+          # Add the custom command with &&
+          if (!cmd_present) $0 = $0 " && " custom_cmd;
+      }
+      in_autorun && /^enabled=/ {
+          # Ensure enabled is true
+          $0 = "enabled=true";
+      }
+      in_autorun && /^[^[]/ { in_autorun = 0; } # End of [AutoRun] section
+      { print }
+      END {
+          # If program= line was not found, add it with the custom command
+          if (in_autorun && !cmd_present) print "program=\"" custom_cmd "\"";
+      }
+      ' "$CONFIG_FILE" > "$TEMP_FILE"
+  else
+      log_error "Couldnt find AutoRun section in $CONFIG_FILE"
+  fi
+  # Replace the original config file with the modified one
+  mv "$TEMP_FILE" "$CONFIG_FILE"
+
+  # Clean up temporary file
+  rm -f "$TEMP_FILE"
+}
 
 init_checks(){
   # Enable or not init_checks
@@ -105,6 +143,7 @@ if [ ! -d "${FROZEN_DIR}" ]; then
 fi
 
 init_checks
+inject_autorun_script
 
 # Get Category path
 CATEGORY_DIR=$(jq -r --arg category "$CATEGORY" '.[$category].save_path' "$CATEG_FILE")
