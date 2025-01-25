@@ -206,10 +206,20 @@ echo "\
 +---------------------------------------------------------+
 "
 
-exec \
+if [ "${DOCKER_MODS_DEBUG,,}" = 'true' ]; then
+  exec \
     s6-notifyoncheck -d -n 300 -w 1000 -c "mountpoint -q ${FROZEN_DIR}" \
-        freezetag mount \
-        --uid "${PUID}" \
-        --gid "${PGID}" \
-        "${CATEGORY_DIR}" \
-        "${FROZEN_DIR}"
+      freezetag mount -v \
+      --uid "${PUID}" \
+      --gid "${PGID}" \
+      "${CATEGORY_DIR}" \
+      "${FROZEN_DIR}"
+else
+  exec \
+    s6-notifyoncheck -d -n 300 -w 1000 -c "mountpoint -q ${FROZEN_DIR}" \
+      freezetag mount \
+      --uid "${PUID}" \
+      --gid "${PGID}" \
+      "${CATEGORY_DIR}" \
+      "${FROZEN_DIR}"
+fi
