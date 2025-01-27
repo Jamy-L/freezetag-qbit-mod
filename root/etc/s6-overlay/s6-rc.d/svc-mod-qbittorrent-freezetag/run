@@ -21,81 +21,6 @@ log_debug() {
 # Check if DOCKER_MODS_DEBUG is set and true
 log_debug "Starting svc-qbittorrent-freezetag..."
 
-
-inject_autorun_script() {
-  # This injects the script that will run on torrent completion.
-  local TEMP_FILE="/tmp/qBittorrent.conf.tmp"
-  touch "$TEMP_FILE"
-  local CUSTOM_CMD="/mod-qbittorrent-freezetag-scripts/freeze.sh %L %F"
-  local changes_made=false
-  local DEBUG_LOG_FILE="/var/log/qbittorrent_autorun.log"
-
-  if grep -q "^\[AutoRun\]" "$CONF_FILE"; then
-      # Modify the [AutoRun] section
-      awk -v custom_cmd="$CUSTOM_CMD" '
-      BEGIN { 
-          in_autorun = 0; 
-          cmd_present = 0; 
-      }
-      /^\[AutoRun\]/ { 
-          in_autorun = 1; 
-          print; 
-          next; 
-      }
-      in_autorun && /^program=/ {
-          # Get everything after program=, trimming leading/trailing whitespace
-          existing_cmd = substr($0, index($0, "=") + 1);
-          gsub(/^[ \t]+|[ \t]+$/, "", existing_cmd);
-          
-          # Check if the custom command is already present
-          if (existing_cmd ~ custom_cmd) {
-              cmd_present = 1;
-              print $0;
-          } else {
-              # Simply concatenate the commands with &&
-              print "program=" existing_cmd " && " custom_cmd;
-          }
-          next;
-      }
-      in_autorun && /^enabled=/ {
-          if ($0 != "enabled=true") {
-              $0 = "enabled=true";
-              print $0;
-          } else {
-              print $0;
-          }
-          next;
-      }
-      in_autorun && /^[^[]/ { 
-          in_autorun = 0; 
-      }
-      { print }
-      ' "$CONF_FILE" > "$TEMP_FILE"
-
-      changes_made=true
-  else  
-      log_error "Could not find [AutoRun] section in $CONF_FILE"
-      return 1
-  fi
-
-  # Replace the original config file with the modified one
-  if $changes_made; then
-      log_debug "Injecting autorun script into $CONF_FILE"
-      mv "$TEMP_FILE" "$CONF_FILE"
-      if [[ -z ${LSIO_NON_ROOT_USER} ]]; then
-        chown -R abc:abc "$CONF_FILE"
-        log_debug "Setting owner of CONF_FILE (${CONF_FILE}) to abc:abc"
-      fi
-      log_debug "New $CONF_FILE:"
-      log_debug "$(cat "$CONF_FILE")"
-  fi
-
-  # Clean up temporary file
-  rm -f "$TEMP_FILE"
-}
-
-
-
 init_checks(){
   # Enable or not init_checks
   if [ "${FTAG_SKIP_INIT_CHECKS,,}" = 'true' ]; then
@@ -178,7 +103,6 @@ elif [ ! -z "$(find ${FROZEN_DIR} -mindepth 1 -print -quit)" ]; then
 fi
 
 init_checks
-inject_autorun_script
 
 # Get Category path
 CATEGORY_DIR=$(jq -r --arg category "$CATEGORY" '.[$category].save_path' "$CATEG_FILE")
