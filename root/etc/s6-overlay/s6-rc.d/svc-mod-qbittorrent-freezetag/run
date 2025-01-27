@@ -212,7 +212,7 @@ if [ "${DOCKER_MODS_DEBUG,,}" = 'true' ]; then
       freezetag mount -v \
       --uid "${PUID}" \
       --gid "${PGID}" \
-      -- allow-other \
+      --allow-other \
       "${CATEGORY_DIR}" \
       "${FROZEN_DIR}"
 else
