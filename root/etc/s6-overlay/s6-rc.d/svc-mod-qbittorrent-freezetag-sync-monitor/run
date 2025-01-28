@@ -278,6 +278,6 @@ response=$(init_response)
 
 while :; do
     response=$(check_removed_torrents "$response")
-    log_debug "Full response after check_removed_torrents: $response"
+    # log_debug "Full response after check_removed_torrents: $response"
     sleep "${MAX_SLEEP_TIME}"
 done
