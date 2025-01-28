@@ -163,7 +163,7 @@ fetch_sync_data() {
         return 1
     fi
 
-    log_debug "Sync data response: $response"
+    # log_debug "Sync data response: $response"
     echo "$response"
 }
 
@@ -173,7 +173,7 @@ process_removed_torrents() {
 
     # Extract the list of removed torrents
     local torrents_removed=$(echo "$sync_response" | jq -c '.torrents_removed[]?')
-    log_debug "Database: $combined_data"
+    # log_debug "Database: $combined_data"
 
     if [[ -n "$torrents_removed" ]]; then
         for torrent_hash in $torrents_removed; do
@@ -278,6 +278,6 @@ response=$(init_response)
 
 while :; do
     response=$(check_removed_torrents "$response")
-    # log_debug "Full response after check_removed_torrents: $response"
+    log_debug "Full response after check_removed_torrents: $response"
     sleep "${MAX_SLEEP_TIME}"
 done
